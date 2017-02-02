@@ -6,18 +6,25 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
 import org.mule.api.annotations.Processor;
+import org.mule.api.registry.MuleRegistry;
+import org.mule.api.registry.RegistrationException;
 import org.mule.modules.springcloudconfig.config.ConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer;
+import org.springframework.core.env.Environment;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -35,6 +42,8 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
 
 	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConnector.class);
 	
+	@Inject
+	private MuleContext context;
 	
     @Config
     ConnectorConfig config;
@@ -50,7 +59,7 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     }
     
     @PostConstruct
-    public void setup() {
+    public void setup() throws Exception {
     	
     	props = new Properties();
     	
@@ -58,7 +67,7 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     	
     	Client client = ClientBuilder.newClient();
     	client.register(JacksonJsonProvider.class);
-    	WebTarget target = client.target(config.getConfigServerBaseUrl()).path(config.getApplicationName()).path(config.getProfile());
+    	WebTarget target = client.target(config.getConfigServerBaseUrl()).path(resolveApplicationName()).path(resolveProfiles());
     	Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class); 
     	
     	logger.debug("Got settings from cloud config server: " + result.toString());
@@ -116,5 +125,61 @@ public class SpringCloudConfigConnector extends PreferencesPlaceholderConfigurer
     public Map<String, Object> dumpConfiguration() {
     	return null;
     }
+    
+    private String resolveProfiles() throws RegistrationException {
+    	String profiles = config.getProfiles();
+    	
+    	Environment springEnv = context.getRegistry().lookupObject(Environment.class);
+    	
+    	
+    	
+    	if (logger.isDebugEnabled()) logger.debug("Configured profiles: " + profiles);
+    	
+    	if (StringUtils.isEmpty(profiles) && springEnv != null) {
+    		logger.debug("Profiles not defined, trying to resolve them from spring environment...");
+    		profiles = StringUtils.join(springEnv.getActiveProfiles(), ",");
+    		
+    		if (logger.isDebugEnabled()) logger.debug("Found profiles: " + profiles);
+    		
+    	}
+    	
+    	if (StringUtils.isEmpty(profiles)) {
+    		logger.error("No profiles could be detected");
+    		throw new IllegalArgumentException("No profiles could be detected for Spring Cloud Configuration");
+    	}
+    	
+    	if (logger.isDebugEnabled()) logger.debug("Resolved profiles: " + profiles);
+    	
+    	return profiles;
+    }
+    
+    
+    private String resolveApplicationName() {
+    	
+    	String app = config.getApplicationName();
+    	
+    	if (logger.isDebugEnabled()) logger.debug("Found app name: " + app);
+    	
+    	if (StringUtils.isEmpty(app)) {
+    		app = context.getConfiguration().getId();
+    		
+    		if (logger.isDebugEnabled()) logger.debug("Detected app name: " + app);
+    	}
+    	
+    	if (StringUtils.isEmpty(app)) {
+    		logger.error("App name could not be detected");
+    		throw new IllegalArgumentException("Could not detect app name from context for Spring Cloud Config");
+    	}
+    	
+    	
+    	if (logger.isDebugEnabled()) logger.debug("Detected app name: " + app);
+    	
+    	return app;
+    	
+    }
+
+	public void setContext(MuleContext context) {
+		this.context = context;
+	}
     
 }

@@ -8,21 +8,36 @@ import org.mule.api.annotations.param.Optional;
 @Configuration(friendlyName = "Spring Cloud Configuration")
 public class ConnectorConfig {
 	
+	/**
+	 * The base URL where the Spring Cloud Config API is hosted.
+	 */
 	@Configurable
 	@Default("http://localhost:8888/")
 	private String configServerBaseUrl;
 	
-	@Configurable
-	private String applicationName;
-	
+	/**
+	 * The name of the application whose properties will be read. If not specified, mule app name will be
+	 * used.
+	 */
 	@Configurable
 	@Optional
-	private String profile;
+	private String applicationName;
 	
+	/**
+	 * The profiles to take into consideration. This is a comma-separated list. If empty, this module
+	 * should try to locate spring profiles.
+	 */
+	@Configurable
+	@Optional
+	private String profiles;
+	
+	/**
+	 * The tag for the configuration. Useful for versioning.
+	 */
 	@Configurable
 	@Optional
 	private String label;
-
+	
 
 	public String getApplicationName() {
 		return applicationName;
@@ -32,12 +47,12 @@ public class ConnectorConfig {
 		this.applicationName = applicationName;
 	}
 
-	public String getProfile() {
-		return profile;
+	public String getProfiles() {
+		return profiles;
 	}
 
-	public void setProfile(String profile) {
-		this.profile = profile;
+	public void setProfiles(String profiles) {
+		this.profiles = profiles;
 	}
 
 	public String getLabel() {
@@ -59,7 +74,7 @@ public class ConnectorConfig {
 	@Override
 	public String toString() {
 		return "ConnectorConfig [configServerBaseUrl=" + configServerBaseUrl + ", applicationName=" + applicationName
-				+ ", profile=" + profile + ", label=" + label + "]";
+				+ ", profiles=" + profiles + ", label=" + label + "]";
 	}
 	
 	
