@@ -20,5 +20,5 @@ This is a standard 'Anypoint Connector' project. And it is mavenized, thus it ca
 
 In short, this connector can be built using:
 
-   $ mvn clean install -Ddevkit.studio.package.skip=false
+    $ mvn clean install -Ddevkit.studio.package.skip=false
    
