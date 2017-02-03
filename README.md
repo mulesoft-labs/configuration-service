@@ -12,3 +12,13 @@ Usage in a mule app:
 ```
 
 All properties defined in the configuration server's repository for the application, profiles and labels will be available in the application in the form of placeholders.
+
+
+## How To Build
+
+This is a standard 'Anypoint Connector' project. And it is mavenized, thus it can be built using the standard toolset.
+
+In short, this connector can be built using:
+
+   $ mvn clean install -Ddevkit.studio.package.skip=false
+   
