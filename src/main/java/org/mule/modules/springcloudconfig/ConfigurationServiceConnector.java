@@ -6,7 +6,6 @@ import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
 import org.mule.api.annotations.Processor;
-import org.mule.api.transformer.DataType;
 import org.mule.modules.springcloudconfig.client.DefaultApplicationDataProvider;
 import org.mule.modules.springcloudconfig.config.ConnectorConfig;
 import org.mule.modules.springcloudconfig.model.ApplicationConfiguration;
@@ -22,8 +21,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
@@ -69,7 +66,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     protected String resolvePlaceholder(String placeholder, Properties p) {
     	logger.debug("Call to resolve placeholder: {}", placeholder);
     	
-    	String value = this.appConfig.readProperty(placeholder).orElse(null);
+    	String value = this.appConfig.readProperty(placeholder);
 
     	if (value != null) {
     		logger.debug("Found key in config server");
@@ -113,7 +110,9 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
 	@Processor
 	public TypedValue readDocument(String key) throws ConfigurationNotFoundException {
 
-        ApplicationDocument doc = appConfig.findDocument(key).orElseThrow(() -> new ConfigurationNotFoundException("Could not find document " + key + " in application " + appConfig.getName()));
+        ApplicationDocument doc = appConfig.findDocument(key);
+
+        if (doc == null) throw new ConfigurationNotFoundException("Could not find document " + key + " in application " + appConfig.getName());
 
         Client client = ClientBuilder.newClient();
         client.register(JacksonJsonProvider.class);
@@ -141,19 +140,27 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
         Map<String, Object> appData = provider.loadApplication(name, version, environment);
 
         //get the properties
-        Map<String, String> properties = (Map) appData.getOrDefault("properties", Collections.EMPTY_MAP);
+        Map<String, String> properties = (Map) appData.get("properties");
+        if (properties == null) {
+            properties = Collections.emptyMap();
+        }
 
         retBuilder.setProperties(properties);
 
         //get the parent apps
-        List<Map<String, String>> parents = (List) appData.getOrDefault("parents", Collections.EMPTY_LIST);
+        List<Map<String, String>> parents = (List) appData.get("parents");
+
+        if (parents == null) {
+            parents = Collections.emptyList();
+        }
+
 
         //go recursively through the parents to build the list.
         for (Map<String, String> parent : parents) {
 
-            String parentName = parent.getOrDefault("application", "");
-            String parentVersion = parent.getOrDefault("version", "");
-            String parentEnvironment = parent.getOrDefault("environment", "");
+            String parentName = parent.get("application");
+            String parentVersion = parent.get("version");
+            String parentEnvironment = parent.get("environment");
 
             ApplicationConfiguration parentConfig = loadApplicationConfiguration(provider, parentName, parentVersion, parentEnvironment);
 

@@ -5,7 +5,6 @@ import org.mule.util.StringUtils;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class ApplicationConfiguration implements Serializable {
 
@@ -53,43 +52,43 @@ public class ApplicationConfiguration implements Serializable {
         return documents;
     }
 
-    public Optional<String> readProperty(String key) {
+    public String readProperty(String key) {
 
         //try with this one
         String prop = properties.get(key);
 
         if (prop != null) {
-            return Optional.of(prop);
+            return prop;
         }
 
         //if the property is not here, may be in one of the parents.
         //this method will navigate all the hierarchy looking for properties.
         for (ApplicationConfiguration parent : parents) {
-            Optional<String> parentProp = parent.readProperty(key);
-            if (parentProp.isPresent()) {
-                return parentProp;
+            prop = parent.readProperty(key);
+            if (prop != null) {
+                return prop;
             }
         }
-        return Optional.empty();
+        return null;
     }
 
-    public Optional<ApplicationDocument> findDocument(String name) {
+    public ApplicationDocument findDocument(String name) {
 
         for (ApplicationDocument doc : documents) {
             if (StringUtils.equals(name, doc.getName())) {
-                return Optional.of(doc);
+                return doc;
             }
         }
 
         //or else, return from any of the parents.
         for (ApplicationConfiguration parent : parents) {
-            Optional<ApplicationDocument> doc = parent.findDocument(name);
-            if (doc.isPresent()) {
+            ApplicationDocument doc = parent.findDocument(name);
+            if (doc != null) {
                 return doc;
             }
         }
 
-        return Optional.empty();
+        return null;
     }
 
 }

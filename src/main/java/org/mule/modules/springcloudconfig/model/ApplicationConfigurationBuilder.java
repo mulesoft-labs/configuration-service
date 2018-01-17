@@ -44,6 +44,19 @@ public class ApplicationConfigurationBuilder {
     }
 
     public ApplicationConfiguration build() {
+
+        if (parents == null) {
+            parents = Collections.emptyList();
+        }
+
+        if (properties == null) {
+            properties = Collections.emptyMap();
+        }
+
+        if (documents == null) {
+            documents = Collections.emptyList();
+        }
+
         return new ApplicationConfiguration(name, version, environment,
                 Collections.unmodifiableMap(properties),
                 Collections.unmodifiableList(parents),
