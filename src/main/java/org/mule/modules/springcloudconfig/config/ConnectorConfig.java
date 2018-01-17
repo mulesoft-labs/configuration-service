@@ -5,7 +5,7 @@ import org.mule.api.annotations.Configurable;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
 
-@Configuration(friendlyName = "Spring Cloud Configuration")
+@Configuration(friendlyName = "Configuration Service Connector")
 public class ConnectorConfig {
 	
 	/**
@@ -20,24 +20,23 @@ public class ConnectorConfig {
 	 * used.
 	 */
 	@Configurable
-	@Optional
+    @Optional
 	private String applicationName;
-	
+
+
 	/**
-	 * The profiles to take into consideration. This is a comma-separated list. If empty, this module
-	 * should try to locate spring profiles.
+	 * The version of the application on the Configuration Service.
 	 */
 	@Configurable
-	@Optional
-	private String profiles;
-	
+	private String version;
+
+
 	/**
-	 * The tag for the configuration. Useful for versioning.
+	 * The environment of the application on the configuration service.
 	 */
 	@Configurable
-	@Optional
-	private String label;
-	
+	private String environment;
+
 
 	public String getApplicationName() {
 		return applicationName;
@@ -47,20 +46,20 @@ public class ConnectorConfig {
 		this.applicationName = applicationName;
 	}
 
-	public String getProfiles() {
-		return profiles;
+	public String getVersion() {
+		return version;
 	}
 
-	public void setProfiles(String profiles) {
-		this.profiles = profiles;
+	public void setVersion(String version) {
+		this.version = version;
 	}
 
-	public String getLabel() {
-		return label;
+	public String getEnvironment() {
+		return environment;
 	}
 
-	public void setLabel(String label) {
-		this.label = label;
+	public void setEnvironment(String environment) {
+		this.environment = environment;
 	}
 
 	public String getConfigServerBaseUrl() {
@@ -73,9 +72,11 @@ public class ConnectorConfig {
 
 	@Override
 	public String toString() {
-		return "ConnectorConfig [configServerBaseUrl=" + configServerBaseUrl + ", applicationName=" + applicationName
-				+ ", profiles=" + profiles + ", label=" + label + "]";
+		return "ConnectorConfig{" +
+				"configServerBaseUrl='" + configServerBaseUrl + '\'' +
+				", applicationName='" + applicationName + '\'' +
+				", version='" + version + '\'' +
+				", environment='" + environment + '\'' +
+				'}';
 	}
-	
-	
 }
