@@ -6,6 +6,9 @@ import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
 import org.mule.api.annotations.Processor;
+import org.mule.api.transformer.DataType;
+import org.mule.devkit.api.transformer.DefaultTranformingValue;
+import org.mule.devkit.api.transformer.TransformingValue;
 import org.mule.modules.springcloudconfig.client.DefaultApplicationDataProvider;
 import org.mule.modules.springcloudconfig.config.ConnectorConfig;
 import org.mule.modules.springcloudconfig.model.ApplicationConfiguration;
@@ -108,7 +111,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
 
 
 	@Processor
-	public TypedValue readDocument(String key) throws ConfigurationNotFoundException {
+	public TransformingValue<InputStream, DataType<InputStream>> readDocument(String key) throws ConfigurationNotFoundException {
 
         ApplicationDocument doc = appConfig.findDocument(key);
 
@@ -119,7 +122,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
 
         ApplicationDataProvider provider = new DefaultApplicationDataProvider(config, client);
 
-        return new TypedValue(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
+        return new DefaultTranformingValue<>(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
     }
 
     /**
@@ -154,7 +157,6 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
             parents = Collections.emptyList();
         }
 
-
         //go recursively through the parents to build the list.
         for (Map<String, String> parent : parents) {
 
@@ -165,6 +167,20 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
             ApplicationConfiguration parentConfig = loadApplicationConfiguration(provider, parentName, parentVersion, parentEnvironment);
 
             retBuilder.parent(parentConfig);
+        }
+
+        //get the documents
+        List<Map<String, String>> documents = (List) appData.get("documents");
+
+        if (documents == null) {
+            documents = Collections.emptyList();
+        }
+
+        for (Map<String, String> document : documents) {
+            String key = document.get("key");
+            String type = document.get("type");
+
+            retBuilder.document(new ApplicationDocument(type, key));
         }
 
         return retBuilder.build();
