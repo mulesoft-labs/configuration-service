@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+type: ConfigCoordinate
+properties:
+  parents?:
+    description: This configuration should inherit its configuration from parent configurations, in order of appearance.
+    type: ConfigCoordinate[]
+  properties?:
+    description: An object whose keys are property names and its values are the property string values.
+    type: object
+  documents?:
+    description: An array of available dynamic configuration documents.
+    type: Document[]

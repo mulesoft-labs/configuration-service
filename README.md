@@ -1,4 +1,4 @@
-# SpringCloudConfig Anypoint Connector
+# Configuration as a Service Connector
 
 Module to integrate with Spring Cloud Config server and load configurations as Property Placeholders.
 

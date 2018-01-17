@@ -1,0 +1,24 @@
+#%RAML 1.0 NamedExample
+application: My Application
+version: '1.0'
+environment: QA
+parents:
+  - 
+    application: Globals
+    version: '1.0'
+    environment: QA
+  - 
+    application: Shared
+    version: '1.1'
+    environment: QA
+properties:
+  'a.b.c': 'myvalue'
+  'my.second.property': 'another value'
+  'another.property': 'Third value, why not?'
+documents:
+  -
+    key: mymapping
+    type: application/json
+  - 
+    key: routes
+    type: application/json

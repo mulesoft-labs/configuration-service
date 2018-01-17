@@ -1,0 +1,16 @@
+#%RAML 1.0 Trait
+responses: 
+  400:
+    description: Request has been sent with invalid data.
+    body: 
+      application/json:
+        example: | 
+          {
+            "status" : "bad request"
+          }
+  401:
+    description: Invalid user credentials.
+  403:
+    description: The operation is forbidden for the current user.
+  500:
+    description: Internal server error.
