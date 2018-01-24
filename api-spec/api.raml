@@ -50,13 +50,13 @@ traits:
               application/json:
                 type: ConfigurationElement
                 example: !include examples/ExampleConfiguration.raml
-      post:
+      put:
         is: [StateTransferOperation]
         description: Replace the current environment configuration with the one provided in the request body.
         body: 
           application/json:
             example: !include examples/ExampleUpdateConfig.raml
-      put:
+      patch:
         is: [StateTransferOperation]
         description: Updates or creates keys in the properties object without removing the existing ones, this operation can be used to create new keys or replace existing values.
         body:
