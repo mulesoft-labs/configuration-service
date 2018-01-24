@@ -32,8 +32,8 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
         WebTarget target = restClient.target(config.getConfigServerBaseUrl())
                 .path(name)
-                .path(config.getEnvironment())
-                .path(config.getVersion());
+                .path(version)
+                .path(environment);
 
         //read it as a java map
         Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class);
@@ -50,7 +50,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
         WebTarget target = restClient.target(config.getConfigServerBaseUrl())
                 .path(app.getName())
                 .path(app.getVersion())
-                .path(config.getEnvironment())
+                .path(app.getEnvironment())
                 .path("dynamic")
                 .path(doc.getName());
 
