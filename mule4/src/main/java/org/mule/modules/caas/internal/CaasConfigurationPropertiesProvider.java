@@ -1,18 +1,65 @@
 package org.mule.modules.caas.internal;
 
+import org.mule.modules.caas.ApplicationDataProvider;
+import org.mule.modules.caas.ConfigurationServiceException;
+import org.mule.modules.caas.client.DefaultApplicationDataProvider;
+import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationProperty;
 
+import javax.ws.rs.client.ClientBuilder;
 import java.util.Optional;
 
 public class CaasConfigurationPropertiesProvider implements ConfigurationPropertiesProvider {
+
+    private final String serviceUrl;
+
+    private final ApplicationDataProvider provider;
+
+    private final ApplicationConfiguration config;
+
+    public CaasConfigurationPropertiesProvider(String serviceUrl, String application, String version, String environment) throws ConfigurationServiceException {
+        this.serviceUrl = serviceUrl;
+
+        provider = new DefaultApplicationDataProvider(serviceUrl, ClientBuilder.newClient());
+
+        config = provider.loadApplicationConfiguration(application, version, environment);
+    }
+
     @Override
     public Optional<ConfigurationProperty> getConfigurationProperty(String configurationAttributeKey) {
-        return Optional.empty();
+
+        String value = config.readProperty(configurationAttributeKey);
+
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new ConfigurationProperty() {
+            @Override
+            public Object getSource() {
+                return value;
+            }
+
+            @Override
+            public Object getRawValue() {
+                return value;
+            }
+
+            @Override
+            public String getKey() {
+                return configurationAttributeKey;
+            }
+        });
+
     }
 
     @Override
     public String getDescription() {
-        return null;
+        return "Configuration Service: " + serviceUrl + " and coordinates: {" +
+                "application: " + config.getName() +
+                ", version: " + config.getVersion() +
+                ", environment: " + config.getEnvironment()
+                + "}";
     }
 }

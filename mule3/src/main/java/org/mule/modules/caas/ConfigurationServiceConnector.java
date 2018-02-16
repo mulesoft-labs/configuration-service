@@ -131,58 +131,8 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
      * @param environment the environment.
      * @return an application configuration.
      */
-    protected ApplicationConfiguration loadApplicationConfiguration(ApplicationDataProvider provider, String name, String version, String environment) throws ConfigurationServiceException {
-
-        ApplicationConfigurationBuilder retBuilder = ApplicationConfiguration.builder()
-                .setName(name)
-                .setEnvironment(environment)
-                .setVersion(version);
-
-        //load from the API
-        Map<String, Object> appData = provider.loadApplication(name, version, environment);
-
-        //get the properties
-        Map<String, String> properties = (Map) appData.get("properties");
-        if (properties == null) {
-            properties = Collections.emptyMap();
-        }
-
-        retBuilder.setProperties(properties);
-
-        //get the parent apps
-        List<Map<String, String>> parents = (List) appData.get("parents");
-
-        if (parents == null) {
-            parents = Collections.emptyList();
-        }
-
-        //go recursively through the parents to build the list.
-        for (Map<String, String> parent : parents) {
-
-            String parentName = parent.get("application");
-            String parentVersion = parent.get("version");
-            String parentEnvironment = parent.get("environment");
-
-            ApplicationConfiguration parentConfig = loadApplicationConfiguration(provider, parentName, parentVersion, parentEnvironment);
-
-            retBuilder.parent(parentConfig);
-        }
-
-        //get the documents
-        List<Map<String, String>> documents = (List) appData.get("documents");
-
-        if (documents == null) {
-            documents = Collections.emptyList();
-        }
-
-        for (Map<String, String> document : documents) {
-            String key = document.get("key");
-            String type = document.get("type");
-
-            retBuilder.document(new ApplicationDocument(type, key));
-        }
-
-        return retBuilder.build();
-     }
+    protected ApplicationConfiguration loadApplicationConfiguration(ApplicationDataProvider provider, String name, String version, String environment) throws ConfigurationServiceException{
+        return provider.loadApplicationConfiguration(name, version, environment);
+    }
 
 }

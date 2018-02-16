@@ -11,8 +11,32 @@ import java.util.Map;
  */
 public interface ApplicationDataProvider {
 
-    public Map<String, Object> loadApplication(String name, String version, String environment) throws ConfigurationNotFoundException;
+    /**
+     * Load the low level information of an application.
+     * @param name
+     * @param version
+     * @param environment
+     * @return
+     * @throws ConfigurationNotFoundException
+     */
+    Map<String, Object> loadApplication(String name, String version, String environment) throws ConfigurationNotFoundException;
 
-    public InputStream loadDocument(ApplicationDocument documentName, ApplicationConfiguration app) throws ConfigurationNotFoundException;
+    /**
+     * Load a document from the configuration service.
+     * @param documentName
+     * @param app
+     * @return
+     * @throws ConfigurationNotFoundException
+     */
+    InputStream loadDocument(ApplicationDocument documentName, ApplicationConfiguration app) throws ConfigurationNotFoundException;
 
+    /**
+     * Load the model for application configuration.
+     * @param name
+     * @param version
+     * @param environment
+     * @return
+     * @throws ConfigurationServiceException
+     */
+    ApplicationConfiguration loadApplicationConfiguration(String name, String version, String environment) throws ConfigurationServiceException;
 }

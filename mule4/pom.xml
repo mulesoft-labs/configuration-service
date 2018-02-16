@@ -17,6 +17,8 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+        <jersey.client.version>1.19.3</jersey.client.version>
+        <jaxrs.api.version>2.0</jaxrs.api.version>
 	</properties>
 
     <dependencies>
@@ -26,6 +28,19 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Add this to use Jersey Client -->
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.client.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${jaxrs.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- mule core -->
         <dependency>
