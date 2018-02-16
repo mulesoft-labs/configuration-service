@@ -1,0 +1,27 @@
+{
+  "minMuleVersion": "4.1.0",
+  "requiredProduct": "MULE",
+  "extensionModelLoaderDescriptor": {
+    "id": "crafted",
+    "attributes": {
+      "type": "org.mule.modules.caas.api.ConfigurationServiceExtensionLoadingDelegate",
+      "version": "1.0.0"
+    }
+  },
+  "name": "caas",
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedPackages": [
+        "org.mule.modules.caas.api"
+      ],
+      "exportedResources": [
+        "META-INF/services/org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProviderFactory"
+      ]
+    }
+  },
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  }
+}
