@@ -1,0 +1,3 @@
+<!-- BEGIN_INCLUDE(spring-cloud-config:greet) -->
+    <spring-cloud-config:greet config-ref="" friend="#[map-payload:friend]" />
+<!-- END_INCLUDE(spring-cloud-config:greet) -->

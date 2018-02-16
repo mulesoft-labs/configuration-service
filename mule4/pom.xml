@@ -3,15 +3,9 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mule.modules.caas</groupId>
-	<artifactId>configuration-services-connector-parent</artifactId>
-	<packaging>pom</packaging>
+	<artifactId>configuration-service-connector-mule4</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>Configuration Service Connector Parent</name>
-
-    <modules>
-        <module>configuration-service-common</module>
-        <module>mule3</module>
-		<module>mule4</module>
-    </modules>
+	<packaging>jar</packaging>
+	<name>Configuration Service Extension :: Mule 4</name>
 
 </project>
