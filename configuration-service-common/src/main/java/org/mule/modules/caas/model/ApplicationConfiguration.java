@@ -1,6 +1,6 @@
 package org.mule.modules.caas.model;
 
-import org.mule.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.List;

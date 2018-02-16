@@ -59,7 +59,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     	Client client = ClientBuilder.newClient();
     	client.register(JacksonJsonProvider.class);
 
-    	ApplicationDataProvider provider = new DefaultApplicationDataProvider(config, client);
+    	ApplicationDataProvider provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
 
     	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
@@ -119,7 +119,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
         Client client = ClientBuilder.newClient();
         client.register(JacksonJsonProvider.class);
 
-        ApplicationDataProvider provider = new DefaultApplicationDataProvider(config, client);
+        ApplicationDataProvider provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
 
         return new DefaultTranformingValue<>(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
     }

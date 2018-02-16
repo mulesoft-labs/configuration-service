@@ -34,17 +34,17 @@
     </repositories>
 
 	<dependencies>
-		<dependency>
+
+        <dependency>
+            <groupId>org.mule.modules.caas</groupId>
+            <artifactId>configuration-services-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-module-jersey</artifactId>
 			<version>${mule.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- Add this to use Jersey Client -->
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-client</artifactId>
-			<version>${jersey.client.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -69,6 +69,7 @@
 		  <version>3.5</version>
 		  <scope>provided</scope>
 		</dependency>
+
 	</dependencies>
 
 

@@ -2,7 +2,6 @@ package org.mule.modules.caas.client;
 
 import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationNotFoundException;
-import org.mule.modules.caas.config.ConnectorConfig;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.modules.caas.model.ApplicationDocument;
 import org.slf4j.Logger;
@@ -19,18 +18,18 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
     private static final Logger logger = LoggerFactory.getLogger(DefaultApplicationDataProvider.class);
 
 
-    private final ConnectorConfig config;
+    private final String baseUrl;
     private final Client restClient;
 
-    public DefaultApplicationDataProvider(ConnectorConfig config, Client restClient) {
-        this.config = config;
+    public DefaultApplicationDataProvider(String baseUrl, Client restClient) {
+        this.baseUrl = baseUrl;
         this.restClient = restClient;
     }
 
     @Override
     public Map<String, Object> loadApplication(String name, String version, String environment) {
 
-        WebTarget target = restClient.target(config.getConfigServerBaseUrl())
+        WebTarget target = restClient.target(baseUrl)
                 .path(name)
                 .path(version)
                 .path(environment);
@@ -47,7 +46,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
     @Override
     public InputStream loadDocument(ApplicationDocument doc, ApplicationConfiguration app) throws ConfigurationNotFoundException {
 
-        WebTarget target = restClient.target(config.getConfigServerBaseUrl())
+        WebTarget target = restClient.target(baseUrl)
                 .path(app.getName())
                 .path(app.getVersion())
                 .path(app.getEnvironment())

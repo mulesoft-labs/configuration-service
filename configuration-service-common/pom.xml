@@ -8,4 +8,45 @@
 	<packaging>jar</packaging>
 	<name>Configuration Service Connector :: Common</name>
 
+    <properties>
+        <jersey.client.version>1.19.3</jersey.client.version>
+        <jaxrs.api.version>2.0</jaxrs.api.version>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+
+	<dependencies>
+
+        <!-- Add this to use Jersey Client -->
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.client.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${jaxrs.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Add log4j api -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.7</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+    </dependencies>
+
 </project>
