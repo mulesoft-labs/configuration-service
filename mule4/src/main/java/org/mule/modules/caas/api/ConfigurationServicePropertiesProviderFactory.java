@@ -15,7 +15,7 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
 
     public static final ComponentIdentifier CONFIG_IDENTIFIER =
             ComponentIdentifier.builder()
-                    .namespace("caas")
+                    .namespace("configuration-service")
                     .name("config")
                     .build();
 

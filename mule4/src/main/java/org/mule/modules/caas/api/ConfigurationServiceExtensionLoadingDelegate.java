@@ -22,7 +22,8 @@ public class ConfigurationServiceExtensionLoadingDelegate implements ExtensionLo
 
     @Override
     public void accept(ExtensionDeclarer extensionDeclarer, ExtensionLoadingContext extensionLoadingContext) {
-        ConfigurationDeclarer configDeclarer = extensionDeclarer.named(EXT_NAME)
+        ConfigurationDeclarer configDeclarer = extensionDeclarer
+                .named(EXT_NAME)
                 .describedAs("Configuration Service Properties Provider")
                 .onVersion("1.0.0")
                 .withCategory(COMMUNITY)
