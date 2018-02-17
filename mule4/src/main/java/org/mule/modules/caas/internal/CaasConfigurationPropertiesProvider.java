@@ -12,18 +12,12 @@ import java.util.Optional;
 
 public class CaasConfigurationPropertiesProvider implements ConfigurationPropertiesProvider {
 
+    private final ApplicationConfiguration config;
     private final String serviceUrl;
 
-    private final ApplicationDataProvider provider;
-
-    private final ApplicationConfiguration config;
-
-    public CaasConfigurationPropertiesProvider(String serviceUrl, String application, String version, String environment) throws ConfigurationServiceException {
+    public CaasConfigurationPropertiesProvider(String serviceUrl, ApplicationConfiguration config) throws ConfigurationServiceException {
+        this.config = config;
         this.serviceUrl = serviceUrl;
-
-        provider = new DefaultApplicationDataProvider(serviceUrl, ClientBuilder.newClient());
-
-        config = provider.loadApplicationConfiguration(application, version, environment);
     }
 
     @Override
