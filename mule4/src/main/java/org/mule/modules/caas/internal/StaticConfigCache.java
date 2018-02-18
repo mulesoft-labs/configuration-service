@@ -1,5 +1,6 @@
 package org.mule.modules.caas.internal;
 
+import org.mule.modules.caas.api.ConfigurationServiceException;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 
 import java.util.*;
@@ -12,19 +13,21 @@ import java.util.*;
 public class StaticConfigCache {
 
     private Map<String, List<ApplicationConfiguration>> staticConfigurationsCache;
+    private Map<String, String> urlMappings;
 
     private static StaticConfigCache instance = new StaticConfigCache();
 
     private StaticConfigCache() {
         staticConfigurationsCache = new HashMap<>();
+        urlMappings = new HashMap<>();
     }
 
     public static StaticConfigCache get() {
         return instance;
     }
 
-    public synchronized void store(String serviceUrl, ApplicationConfiguration config) {
-        List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(serviceUrl, new LinkedList<>());
+    public synchronized void store(String configId, String serviceUrl, ApplicationConfiguration config) {
+        List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(configId, new LinkedList<>());
 
         ApplicationConfiguration existing = serviceCache.stream()
                 .filter(a -> sameCoordinates(a, config))
@@ -36,7 +39,8 @@ public class StaticConfigCache {
         }
 
         //update the cache.
-        staticConfigurationsCache.put(serviceUrl, serviceCache);
+        staticConfigurationsCache.put(configId, serviceCache);
+        urlMappings.put(configId, serviceUrl);
     }
 
 
@@ -46,16 +50,30 @@ public class StaticConfigCache {
                 a.getEnvironment().equals(b.getEnvironment());
     }
 
-    public synchronized Optional<ApplicationConfiguration> find(String serviceUrl, String app, String ver, String env) {
+    public synchronized Optional<ApplicationConfiguration> find(String configName) {
+        List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(configName, new LinkedList<>());
+        return serviceCache.stream().findAny();
+    }
 
-        List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(serviceUrl, new LinkedList<>());
+    public synchronized Optional<ApplicationConfiguration> findOne() throws ConfigurationServiceException {
+         return staticConfigurationsCache.entrySet()
+                 .stream().findAny()
+                 .orElseThrow(() -> new ConfigurationServiceException("No configuration present"))
+                 .getValue()
+                 .stream()
+                 .findAny();
+    }
 
-        return serviceCache.stream()
-                .filter(config -> {
-                    return config.getName().equals(app) &&
-                            config.getVersion().equals(ver) &&
-                            config.getEnvironment().equals(env);
-                }).findAny();
+    public Optional<String> getServiceUrl(String configId) {
+        String ret =  urlMappings.get(configId);
+
+        if (ret == null && !urlMappings.isEmpty()) {
+            ret = urlMappings.entrySet()
+                    .stream().findAny()
+                    .get().getValue();
+        }
+
+        return Optional.ofNullable(ret);
     }
 
 }

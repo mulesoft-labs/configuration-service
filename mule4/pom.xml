@@ -53,6 +53,12 @@
             <version>${jaxrs.api.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+        </dependency>
+
         <!-- mule core -->
         <dependency>
             <groupId>org.mule.runtime</groupId>

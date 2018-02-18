@@ -3,6 +3,7 @@ package org.mule.modules.caas.internal;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.runtime.extension.api.annotation.Configuration;
 import org.mule.runtime.extension.api.annotation.Operations;
+import org.mule.runtime.extension.api.annotation.param.Optional;
 import org.mule.runtime.extension.api.annotation.param.Parameter;
 
 @Configuration
@@ -10,6 +11,7 @@ import org.mule.runtime.extension.api.annotation.param.Parameter;
 public class ConfigurationServiceConfig {
 
     @Parameter
+    @Optional(defaultValue = "http://localhost:8080/api/configuration")
     private String serviceUrl;
     @Parameter
     private String application;
