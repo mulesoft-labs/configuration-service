@@ -1,8 +1,8 @@
 package org.mule.modules.caas.client;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.SslConfigurator;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,10 +10,9 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+
+import static org.mule.modules.caas.util.ConfigurationServiceUtil.loadFilesystemOrClasspathResource;
 
 public class ClientUtils {
 
@@ -89,41 +88,6 @@ public class ClientUtils {
                 }
                 return client;
             }
-    }
-
-    public static InputStream loadFilesystemOrClasspathResource(String resourceName) {
-
-        try {
-
-            File tryFile = new File(resourceName);
-
-            if (tryFile.exists()) {
-                logger.debug("Found resource {} in filesystem, loading it...", resourceName);
-                return new FileInputStream(tryFile);
-            }
-
-
-
-            InputStream is = null;
-
-            if (Thread.currentThread().getContextClassLoader() != null) {
-                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
-            }
-
-            if (is == null) {
-                ClientUtils.class.getClassLoader().getResourceAsStream(resourceName);
-            }
-
-            if (is == null) {
-                logger.warn("Could not find resource: {} either on classpath or filesystem...", resourceName);
-            }
-
-            return is;
-
-        } catch (IOException ex) {
-            logger.error("Error while trying to load resource from filesystem or classpath...", ex);
-            throw new RuntimeException(ex);
-        }
     }
 
 

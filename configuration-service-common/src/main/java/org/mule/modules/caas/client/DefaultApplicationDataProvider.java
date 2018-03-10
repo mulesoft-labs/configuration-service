@@ -41,7 +41,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
         //read it as a java map
         Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class);
 
-        logger.debug("Got settings from cloud config server: {}", result);
+        logger.debug("Got settings from configuration server: {}", result);
 
 
         return result;
