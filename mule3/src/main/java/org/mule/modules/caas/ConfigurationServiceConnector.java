@@ -11,6 +11,7 @@ import org.mule.devkit.api.transformer.TransformingValue;
 import org.mule.modules.caas.client.ClientUtils;
 import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.config.ConnectorConfig;
+import org.mule.modules.caas.local.LocalApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.modules.caas.model.ApplicationDocument;
 import org.mule.transformer.types.SimpleDataType;
@@ -36,6 +37,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     ConnectorConfig config;
 
     private ApplicationConfiguration appConfig;
+    private ApplicationDataProvider provider;
 
     public ConnectorConfig getConfig() {
         return config;
@@ -50,10 +52,17 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     	
     	logger.debug("Setting up connector with properties: {}", config);
 
-    	//standard for rest clients.
-		Client client = buildClient();
+    	provider = null;
 
-    	ApplicationDataProvider provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
+    	if (StringUtils.isNotEmpty(config.getLocalEnvironmentName()) &&
+                StringUtils.equals(config.getEnvironment(), config.getLocalEnvironmentName())) {
+
+    	    provider = new LocalApplicationDataProvider(config.getLocalEnvironmentName());
+        } else {
+            //standard for rest clients.
+            Client client = buildClient();
+            provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
+        }
 
     	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
@@ -109,10 +118,6 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
         ApplicationDocument doc = appConfig.findDocument(key);
 
         if (doc == null) throw new ConfigurationNotFoundException("Could not find document " + key + " in application " + appConfig.getName());
-
-		Client client = buildClient();
-
-        ApplicationDataProvider provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
 
         return new DefaultTranformingValue<>(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
     }

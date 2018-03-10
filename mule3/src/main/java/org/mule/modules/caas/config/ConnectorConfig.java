@@ -44,6 +44,16 @@ public class ConnectorConfig {
 	@Placement(group = "Basic", order = 4)
 	private String environment;
 
+
+	/**
+	 * Defines the environment name that should be considered as local. This setting is useful for
+	 * development as avoids the initial need to have a configuration service present.
+	 */
+	@Configurable
+	@Optional
+	@Placement(group = "Basic", order = 5)
+	private String localEnvironmentName;
+
 	/**
 	 * The location of the trust store either in the classpath or in the filesystem.
 	 */
@@ -149,6 +159,14 @@ public class ConnectorConfig {
 
 	public void setDisableHostNameVerification(boolean disableHostNameVerification) {
 		this.disableHostNameVerification = disableHostNameVerification;
+	}
+
+	public String getLocalEnvironmentName() {
+		return localEnvironmentName;
+	}
+
+	public void setLocalEnvironmentName(String localEnvironmentName) {
+		this.localEnvironmentName = localEnvironmentName;
 	}
 
 	@Override
