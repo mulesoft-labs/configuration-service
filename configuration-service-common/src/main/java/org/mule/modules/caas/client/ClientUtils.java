@@ -81,7 +81,8 @@ public class ClientUtils {
                 }
 
                 client = cb.build();
-
+            } catch (Throwable ex) {
+                logger.error("Unknown error while building client...", ex);
             } finally {
                 if (client != null) {
                     client.register(JacksonJsonProvider.class);

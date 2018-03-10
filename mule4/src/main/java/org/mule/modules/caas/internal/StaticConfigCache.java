@@ -13,20 +13,20 @@ import java.util.*;
 public class StaticConfigCache {
 
     private Map<String, List<ApplicationConfiguration>> staticConfigurationsCache;
-    private Map<String, String> urlMappings;
+    private Map<String, ConfigurationServiceConfig> serviceConfigs;
 
     private static StaticConfigCache instance = new StaticConfigCache();
 
     private StaticConfigCache() {
         staticConfigurationsCache = new HashMap<>();
-        urlMappings = new HashMap<>();
+        serviceConfigs = new HashMap<>();
     }
 
     public static StaticConfigCache get() {
         return instance;
     }
 
-    public synchronized void store(String configId, String serviceUrl, ApplicationConfiguration config) {
+    public synchronized void store(String configId, ConfigurationServiceConfig serviceConfig, ApplicationConfiguration config) {
         List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(configId, new LinkedList<>());
 
         ApplicationConfiguration existing = serviceCache.stream()
@@ -40,7 +40,7 @@ public class StaticConfigCache {
 
         //update the cache.
         staticConfigurationsCache.put(configId, serviceCache);
-        urlMappings.put(configId, serviceUrl);
+        serviceConfigs.put(configId, serviceConfig);
     }
 
 
@@ -64,11 +64,11 @@ public class StaticConfigCache {
                  .findAny();
     }
 
-    public Optional<String> getServiceUrl(String configId) {
-        String ret =  urlMappings.get(configId);
+    public Optional<ConfigurationServiceConfig> getServiceUrl(String configId) {
+        ConfigurationServiceConfig ret =  serviceConfigs.get(configId);
 
-        if (ret == null && !urlMappings.isEmpty()) {
-            ret = urlMappings.entrySet()
+        if (ret == null && !serviceConfigs.isEmpty()) {
+            ret = serviceConfigs.entrySet()
                     .stream().findAny()
                     .get().getValue();
         }

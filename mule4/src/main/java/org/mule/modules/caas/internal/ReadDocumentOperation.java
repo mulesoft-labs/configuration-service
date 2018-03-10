@@ -4,6 +4,7 @@ import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationNotFoundException;
 import org.mule.modules.caas.api.ConfigurationServiceException;
 import org.mule.modules.caas.api.ReadDocumentAttributes;
+import org.mule.modules.caas.client.ClientUtils;
 import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.modules.caas.model.ApplicationDocument;
@@ -36,13 +37,18 @@ public class ReadDocumentOperation {
 
         ApplicationDocument doc = appConfig.get().findDocument(key);
 
-        String serviceUrl = StaticConfigCache.get().
+        ConfigurationServiceConfig serviceConfig = StaticConfigCache.get().
                 getServiceUrl(configId).orElseThrow(() -> new ConfigurationServiceException("Cannot find config"));
 
         if (doc == null) throw new ConfigurationServiceException("Could not find document " + key + " in application " + appConfig.get().getName());
 
-        Client client = ClientBuilder.newClient();
-        ApplicationDataProvider provider = new DefaultApplicationDataProvider(serviceUrl, client);
+        Client client = ClientUtils.buildRestClient(serviceConfig.getKeyStore(),
+                serviceConfig.getKeyStorePassword(),
+                serviceConfig.getTrustStore(),
+                serviceConfig.getTrustStorePassword(),
+                serviceConfig.isDisableHostNameVerification());
+
+        ApplicationDataProvider provider = new DefaultApplicationDataProvider(serviceConfig.getServiceUrl(), client);
 
         try {
             return Result.<InputStream, ReadDocumentAttributes>builder()
