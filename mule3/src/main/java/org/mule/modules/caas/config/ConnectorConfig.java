@@ -2,8 +2,11 @@ package org.mule.modules.caas.config;
 
 import org.mule.api.annotations.components.Configuration;
 import org.mule.api.annotations.Configurable;
+import org.mule.api.annotations.display.Password;
+import org.mule.api.annotations.display.Placement;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
+
 
 @Configuration(friendlyName = "Configuration Service Connector")
 public class ConnectorConfig {
@@ -13,6 +16,7 @@ public class ConnectorConfig {
 	 */
 	@Configurable
 	@Default("http://localhost:8888/")
+	@Placement(group = "Basic", order = 1)
 	private String configServerBaseUrl;
 	
 	/**
@@ -21,6 +25,7 @@ public class ConnectorConfig {
 	 */
 	@Configurable
     @Optional
+	@Placement(group = "Basic", order = 2)
 	private String applicationName;
 
 
@@ -28,6 +33,7 @@ public class ConnectorConfig {
 	 * The version of the application on the Configuration Service.
 	 */
 	@Configurable
+	@Placement(group = "Basic", order = 3)
 	private String version;
 
 
@@ -35,8 +41,43 @@ public class ConnectorConfig {
 	 * The environment of the application on the configuration service.
 	 */
 	@Configurable
+	@Placement(group = "Basic", order = 4)
 	private String environment;
 
+	/**
+	 * The location of the trust store either in the classpath or in the filesystem.
+	 */
+	@Configurable
+	@Optional @Placement(group = "SSL", tab = "SSL", order = 1)
+	private String trustStore;
+
+	/**
+	 * The password of the trust store.
+	 */
+	@Configurable
+	@Password
+	@Optional @Placement(group = "SSL", tab = "SSL", order = 2)
+	private String trustStorePassword;
+
+	/**
+	 * The location of the keystore either in the classpath or in the filesystem.
+	 */
+	@Configurable
+	@Optional @Placement(group = "SSL", tab = "SSL", order = 3)
+	private String keyStore;
+
+	/**
+	 * The password of the keystore
+	 */
+	@Configurable
+	@Password
+	@Optional @Placement(group = "SSL", tab = "SSL", order = 4)
+	private String keyStorePassword;
+
+	@Configurable
+	@Default("false")
+	@Optional @Placement(group = "SSL", tab = "SSL", order = 5)
+	private boolean disableHostNameVerification;
 
 	public String getApplicationName() {
 		return applicationName;
@@ -68,6 +109,46 @@ public class ConnectorConfig {
 
 	public void setConfigServerBaseUrl(String configServerBaseUrl) {
 		this.configServerBaseUrl = configServerBaseUrl;
+	}
+
+	public String getTrustStore() {
+		return trustStore;
+	}
+
+	public void setTrustStore(String trustStore) {
+		this.trustStore = trustStore;
+	}
+
+	public String getTrustStorePassword() {
+		return trustStorePassword;
+	}
+
+	public void setTrustStorePassword(String trustStorePassword) {
+		this.trustStorePassword = trustStorePassword;
+	}
+
+	public String getKeyStore() {
+		return keyStore;
+	}
+
+	public void setKeyStore(String keyStore) {
+		this.keyStore = keyStore;
+	}
+
+	public String getKeyStorePassword() {
+		return keyStorePassword;
+	}
+
+	public void setKeyStorePassword(String keyStorePassword) {
+		this.keyStorePassword = keyStorePassword;
+	}
+
+	public boolean isDisableHostNameVerification() {
+		return disableHostNameVerification;
+	}
+
+	public void setDisableHostNameVerification(boolean disableHostNameVerification) {
+		this.disableHostNameVerification = disableHostNameVerification;
 	}
 
 	@Override
