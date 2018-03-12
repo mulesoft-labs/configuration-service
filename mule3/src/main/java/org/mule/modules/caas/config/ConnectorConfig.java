@@ -2,22 +2,25 @@ package org.mule.modules.caas.config;
 
 import org.mule.api.annotations.components.Configuration;
 import org.mule.api.annotations.Configurable;
+import org.mule.api.annotations.display.FriendlyName;
 import org.mule.api.annotations.display.Password;
 import org.mule.api.annotations.display.Placement;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
+import org.mule.modules.caas.ServiceConfiguration;
 
 
 @Configuration(friendlyName = "Configuration Service Connector")
-public class ConnectorConfig {
+public class ConnectorConfig implements ServiceConfiguration{
 	
 	/**
 	 * The base URL where the Spring Cloud Config API is hosted.
 	 */
 	@Configurable
 	@Default("http://localhost:8888/")
+    @FriendlyName("Configuration Service URL")
 	@Placement(group = "Basic", order = 1)
-	private String configServerBaseUrl;
+	private String serviceUrl;
 	
 	/**
 	 * The name of the application whose properties will be read. If not specified, mule app name will be
@@ -25,8 +28,9 @@ public class ConnectorConfig {
 	 */
 	@Configurable
     @Optional
+    @FriendlyName("Application Name")
 	@Placement(group = "Basic", order = 2)
-	private String applicationName;
+	private String application;
 
 
 	/**
@@ -89,15 +93,16 @@ public class ConnectorConfig {
 	@Optional @Placement(group = "SSL", tab = "SSL", order = 5)
 	private boolean disableHostNameVerification;
 
-	public String getApplicationName() {
-		return applicationName;
-	}
+    @Override
+    public String getApplication() {
+        return application;
+    }
 
-	public void setApplicationName(String applicationName) {
-		this.applicationName = applicationName;
-	}
+    public void setApplication(String application) {
+        this.application = application;
+    }
 
-	public String getVersion() {
+    public String getVersion() {
 		return version;
 	}
 
@@ -113,15 +118,16 @@ public class ConnectorConfig {
 		this.environment = environment;
 	}
 
-	public String getConfigServerBaseUrl() {
-		return configServerBaseUrl;
-	}
+    @Override
+    public String getServiceUrl() {
+        return serviceUrl;
+    }
 
-	public void setConfigServerBaseUrl(String configServerBaseUrl) {
-		this.configServerBaseUrl = configServerBaseUrl;
-	}
+    public void setServiceUrl(String serviceUrl) {
+        this.serviceUrl = serviceUrl;
+    }
 
-	public String getTrustStore() {
+    public String getTrustStore() {
 		return trustStore;
 	}
 
@@ -172,8 +178,8 @@ public class ConnectorConfig {
 	@Override
 	public String toString() {
 		return "ConnectorConfig{" +
-				"configServerBaseUrl='" + configServerBaseUrl + '\'' +
-				", applicationName='" + applicationName + '\'' +
+				"serviceUrl='" + serviceUrl + '\'' +
+				", application='" + application + '\'' +
 				", version='" + version + '\'' +
 				", environment='" + environment + '\'' +
 				'}';

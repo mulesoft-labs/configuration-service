@@ -1,6 +1,7 @@
 package org.mule.modules.caas;
 
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.message.internal.XmlJaxbElementProvider;
 import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
@@ -21,7 +22,6 @@ import org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -52,17 +52,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     	
     	logger.debug("Setting up connector with properties: {}", config);
 
-    	provider = null;
-
-    	if (StringUtils.isNotEmpty(config.getLocalEnvironmentName()) &&
-                StringUtils.equals(config.getEnvironment(), config.getLocalEnvironmentName())) {
-
-    	    provider = new LocalApplicationDataProvider(config.getLocalEnvironmentName());
-        } else {
-            //standard for rest clients.
-            Client client = buildClient();
-            provider = new DefaultApplicationDataProvider(config.getConfigServerBaseUrl(), client);
-        }
+    	provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
     	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
@@ -85,7 +75,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     
     private String resolveApplicationName() {
     	
-    	String app = config.getApplicationName();
+    	String app = config.getApplication();
     	
     	if (logger.isDebugEnabled()) logger.debug("Found app name: {}", app);
     	
@@ -120,14 +110,6 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
         if (doc == null) throw new ConfigurationNotFoundException("Could not find document " + key + " in application " + appConfig.getName());
 
         return new DefaultTranformingValue<>(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
-    }
-
-    private Client buildClient() {
-        return ClientUtils.buildRestClient(config.getKeyStore(),
-                config.getKeyStorePassword(),
-                config.getTrustStore(),
-                config.getTrustStorePassword(),
-                config.isDisableHostNameVerification());
     }
 
 	/**
