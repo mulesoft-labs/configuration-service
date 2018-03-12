@@ -1,6 +1,6 @@
 package org.mule.modules.caas.internal;
 
-import org.mule.modules.caas.model.ApplicationConfiguration;
+import org.mule.modules.caas.ServiceConfiguration;
 import org.mule.runtime.extension.api.annotation.Configuration;
 import org.mule.runtime.extension.api.annotation.Operations;
 import org.mule.runtime.extension.api.annotation.param.Optional;
@@ -10,7 +10,7 @@ import org.mule.runtime.extension.api.annotation.param.display.Placement;
 
 @Configuration
 @Operations(ReadDocumentOperation.class)
-public class ConfigurationServiceConfig {
+public class ConfigurationServiceConfig implements ServiceConfiguration {
 
     @Parameter
     @Optional(defaultValue = "http://localhost:8080/api/configuration")
@@ -25,6 +25,11 @@ public class ConfigurationServiceConfig {
     @Parameter
     @Placement(order = 4)
     private String environment;
+
+    @Parameter
+    @Optional(defaultValue = "")
+    @Placement(order = 5)
+    private String localEnvironmentName;
 
     @Parameter
     @Optional
@@ -132,5 +137,13 @@ public class ConfigurationServiceConfig {
 
     public void setDisableHostNameVerification(boolean disableHostNameVerification) {
         this.disableHostNameVerification = disableHostNameVerification;
+    }
+
+    public String getLocalEnvironmentName() {
+        return localEnvironmentName;
+    }
+
+    public void setLocalEnvironmentName(String localEnvironmentName) {
+        this.localEnvironmentName = localEnvironmentName;
     }
 }

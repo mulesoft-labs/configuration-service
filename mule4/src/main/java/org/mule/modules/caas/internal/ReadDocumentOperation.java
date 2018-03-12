@@ -42,13 +42,7 @@ public class ReadDocumentOperation {
 
         if (doc == null) throw new ConfigurationServiceException("Could not find document " + key + " in application " + appConfig.get().getName());
 
-        Client client = ClientUtils.buildRestClient(serviceConfig.getKeyStore(),
-                serviceConfig.getKeyStorePassword(),
-                serviceConfig.getTrustStore(),
-                serviceConfig.getTrustStorePassword(),
-                serviceConfig.isDisableHostNameVerification());
-
-        ApplicationDataProvider provider = new DefaultApplicationDataProvider(serviceConfig.getServiceUrl(), client);
+        ApplicationDataProvider provider = ApplicationDataProvider.factory.newApplicationDataProvider(serviceConfig);
 
         try {
             return Result.<InputStream, ReadDocumentAttributes>builder()

@@ -1,11 +1,14 @@
 package org.mule.modules.caas.api;
 
+import org.apache.commons.lang3.StringUtils;
+import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationServiceException;
 import org.mule.modules.caas.client.ClientUtils;
 import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.internal.CaasConfigurationPropertiesProvider;
 import org.mule.modules.caas.internal.ConfigurationServiceConfig;
 import org.mule.modules.caas.internal.StaticConfigCache;
+import org.mule.modules.caas.local.LocalApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.runtime.api.component.ComponentIdentifier;
 import org.mule.runtime.api.util.Preconditions;
@@ -34,6 +37,7 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
     public static final String TRUSTSTORE_PARAM = "trustStore";
     public static final String TRUSTPASSWD_PARAM = "trustStorePassword";
     public static final String DISABLEDNS_PARAM = "disableHostNameVerification";
+    public static final String LOCALENV_PARAM = "localEnvironmentName";
 
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationServicePropertiesProviderFactory.class);
@@ -66,6 +70,7 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             String keyPassword = getOptionalStringParemeter(parameters, KEYPASSWD_PARAM);
             String trustStore = getOptionalStringParemeter(parameters, TRUSTSTORE_PARAM);
             String trustPassword = getOptionalStringParemeter(parameters, TRUSTPASSWD_PARAM);
+            String localEnvironmentName = getOptionalStringParemeter(parameters, LOCALENV_PARAM);
             boolean disableDnsLookup = Boolean.parseBoolean(getOptionalStringParemeter(parameters, DISABLEDNS_PARAM));
 
 
@@ -86,14 +91,10 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             config.setServiceUrl(url);
             config.setTrustStore(trustStore);
             config.setTrustStorePassword(trustPassword);
+            config.setLocalEnvironmentName(localEnvironmentName);
 
-            Client client = ClientUtils.buildRestClient(keystore, keyPassword, trustStore, trustPassword, disableDnsLookup);
+            ApplicationDataProvider provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
-            if (client == null) {
-                throw new RuntimeException("Incorrect client settings...");
-            }
-
-            DefaultApplicationDataProvider provider = new DefaultApplicationDataProvider(url, client);
             ApplicationConfiguration appConfig = provider.loadApplicationConfiguration(app, ver, env);
 
             //store in static config cache for further use.

@@ -12,6 +12,11 @@ import java.util.Map;
 public interface ApplicationDataProvider {
 
     /**
+     * Convenience instance to improve readability of the code.
+     */
+    static ApplicationDataProviderFactory factory = new ApplicationDataProviderFactory();
+
+    /**
      * Load the low level information of an application.
      * @param name
      * @param version
