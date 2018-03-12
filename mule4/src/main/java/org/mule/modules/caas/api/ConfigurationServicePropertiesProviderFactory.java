@@ -1,14 +1,10 @@
 package org.mule.modules.caas.api;
 
-import org.apache.commons.lang3.StringUtils;
 import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationServiceException;
-import org.mule.modules.caas.client.ClientUtils;
-import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.internal.CaasConfigurationPropertiesProvider;
 import org.mule.modules.caas.internal.ConfigurationServiceConfig;
 import org.mule.modules.caas.internal.StaticConfigCache;
-import org.mule.modules.caas.local.LocalApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.runtime.api.component.ComponentIdentifier;
 import org.mule.runtime.api.util.Preconditions;
@@ -16,13 +12,8 @@ import org.mule.runtime.config.api.dsl.model.ConfigurationParameters;
 import org.mule.runtime.config.api.dsl.model.ResourceProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProviderFactory;
-import org.mule.runtime.core.internal.registry.MuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 
 
 public class ConfigurationServicePropertiesProviderFactory implements ConfigurationPropertiesProviderFactory {
@@ -41,9 +32,6 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
 
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationServicePropertiesProviderFactory.class);
-
-    @Inject
-    private MuleRegistry registry;
 
     public static final ComponentIdentifier CONFIG_IDENTIFIER =
             ComponentIdentifier.builder()

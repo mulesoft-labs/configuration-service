@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.Properties;
@@ -49,14 +50,26 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     
     @PostConstruct
     public void setup() throws Exception {
-    	
+
+        logger.debug("Concrete class is: {}", getClass().getName());
+
     	logger.debug("Setting up connector with properties: {}", config);
+
+    	if (appConfig != null) {
+    	    logger.debug("Connector already initialized, skipping re-initialization.");
+    	    return;
+        }
 
     	provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
     	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
-    
+
+    @PreDestroy
+    public void disposeBean() {
+        logger.debug("Destroying {}" , getClass().getName());
+    }
+
     @Override
     protected String resolvePlaceholder(String placeholder, Properties p) {
     	logger.debug("Call to resolve placeholder: {}", placeholder);
