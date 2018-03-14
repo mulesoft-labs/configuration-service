@@ -12,11 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Configuration(friendlyName = "Configuration Service Connector")
 public class ConnectorConfig implements ServiceConfiguration{
-	
+
+    public enum SystemPropertiesMode {
+        SYSTEM_PROPERTIES_MODE_NEVER,
+        SYSTEM_PROPERTIES_MODE_FALLBACK,
+        SYSTEM_PROPERTIES_MODE_OVERRIDE
+    }
+
 	/**
 	 * The base URL where the Spring Cloud Config API is hosted.
 	 */
@@ -97,13 +105,30 @@ public class ConnectorConfig implements ServiceConfiguration{
 	@Optional @Placement(group = "SSL", tab = "SSL", order = 5)
 	private boolean disableHostNameVerification;
 
+
+	@Configurable
+    @Optional @Default("0")
+    @Placement(group = "Property Placeholder", order = 2)
+	private int order;
+
+
+    @Configurable
+    @Default("false")
+    @Placement(group = "Property Placeholder", order = 1)
+	private boolean ignoreUnresolvablePlaceholders;
+
+    @Configurable
+    @Default("SYSTEM_PROPERTIES_MODE_FALLBACK")
+    @Placement(group = "Property Placeholder", order = 3)
+    private SystemPropertiesMode systemPropertiesMode;
+
     @Override
     public String getApplication() {
         return application;
     }
 
     public void setApplication(String application) {
-        this.application = application;
+        this.application = readEnvironmentalProperties(application);
     }
 
     public String getVersion() {
@@ -111,7 +136,7 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setVersion(String version) {
-		this.version = version;
+		this.version = readEnvironmentalProperties(version);
 	}
 
 	public String getEnvironment() {
@@ -119,7 +144,7 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setEnvironment(String environment) {
-		this.environment = environment;
+		this.environment = readEnvironmentalProperties(environment);
 	}
 
     @Override
@@ -128,7 +153,7 @@ public class ConnectorConfig implements ServiceConfiguration{
     }
 
     public void setServiceUrl(String serviceUrl) {
-        this.serviceUrl = serviceUrl;
+        this.serviceUrl = readEnvironmentalProperties(serviceUrl);
     }
 
     public String getTrustStore() {
@@ -136,15 +161,15 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setTrustStore(String trustStore) {
-		this.trustStore = trustStore;
+		this.trustStore = readEnvironmentalProperties(trustStore);
 	}
 
 	public String getTrustStorePassword() {
-		return trustStorePassword;
+		return readEnvironmentalProperties(trustStorePassword);
 	}
 
 	public void setTrustStorePassword(String trustStorePassword) {
-		this.trustStorePassword = trustStorePassword;
+		this.trustStorePassword = readEnvironmentalProperties(trustStorePassword);
 	}
 
 	public String getKeyStore() {
@@ -152,7 +177,7 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setKeyStore(String keyStore) {
-		this.keyStore = keyStore;
+		this.keyStore = readEnvironmentalProperties(keyStore);
 	}
 
 	public String getKeyStorePassword() {
@@ -160,7 +185,7 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setKeyStorePassword(String keyStorePassword) {
-		this.keyStorePassword = keyStorePassword;
+		this.keyStorePassword = readEnvironmentalProperties(keyStorePassword);
 	}
 
 	public boolean isDisableHostNameVerification() {
@@ -176,10 +201,34 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setLocalEnvironmentName(String localEnvironmentName) {
-		this.localEnvironmentName = localEnvironmentName;
+		this.localEnvironmentName = readEnvironmentalProperties(localEnvironmentName);
 	}
 
-	@Override
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public boolean isIgnoreUnresolvablePlaceholders() {
+        return ignoreUnresolvablePlaceholders;
+    }
+
+    public void setIgnoreUnresolvablePlaceholders(boolean ignoreUnresolvablePlaceholders) {
+        this.ignoreUnresolvablePlaceholders = ignoreUnresolvablePlaceholders;
+    }
+
+    public SystemPropertiesMode getSystemPropertiesMode() {
+        return systemPropertiesMode;
+    }
+
+    public void setSystemPropertiesMode(SystemPropertiesMode systemPropertiesMode) {
+        this.systemPropertiesMode = systemPropertiesMode;
+    }
+
+    @Override
 	public String toString() {
 		return "ConnectorConfig{" +
 				"serviceUrl='" + serviceUrl + '\'' +
@@ -188,4 +237,41 @@ public class ConnectorConfig implements ServiceConfiguration{
 				", environment='" + environment + '\'' +
 				'}';
 	}
+
+    ///UTILITY METHODS TO ALLOW USAGE OF PLACEHOLDERS WITHIN THE PLACEHOLDERS
+
+
+    public String readEnvironmentalProperties(String text)
+    {
+        Pattern propertyPatter = Pattern.compile("\\$\\{([^\\}]+)\\}");
+        Matcher propertyMatcher = propertyPatter.matcher(text);
+        String modifiedText = text;
+        while (propertyMatcher.find())
+        {
+            String property = propertyMatcher.group(1);
+            modifiedText = replaceProperty(modifiedText, property);
+        }
+
+        return modifiedText;
+    }
+
+    private String replaceProperty(String modifiedText, String property)
+    {
+        String propertyValue = System.getProperty(property);
+        checkForPropertyExistence(property, propertyValue);
+        String pattern = "\\$\\{(" + property + ")\\}";
+        Pattern replacement = Pattern.compile(pattern);
+        Matcher replacementMatcher = replacement.matcher(modifiedText);
+        replacementMatcher.find();
+        return replacementMatcher.replaceAll(Matcher.quoteReplacement(propertyValue));
+    }
+
+    private void checkForPropertyExistence(String property, String propertyValue)
+    {
+        if (propertyValue == null)
+        {
+            throw new RuntimeException("Property " + property + " could not be found");
+        }
+    }
+
 }

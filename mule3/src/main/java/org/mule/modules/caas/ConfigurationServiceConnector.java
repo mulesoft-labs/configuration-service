@@ -1,7 +1,6 @@
 package org.mule.modules.caas;
 
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.message.internal.XmlJaxbElementProvider;
 import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
 import org.mule.api.annotations.Connector;
@@ -9,10 +8,7 @@ import org.mule.api.annotations.Processor;
 import org.mule.api.transformer.DataType;
 import org.mule.devkit.api.transformer.DefaultTranformingValue;
 import org.mule.devkit.api.transformer.TransformingValue;
-import org.mule.modules.caas.client.ClientUtils;
-import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.config.ConnectorConfig;
-import org.mule.modules.caas.local.LocalApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.modules.caas.model.ApplicationDocument;
 import org.mule.transformer.types.SimpleDataType;
@@ -51,16 +47,18 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     @PostConstruct
     public void setup() throws Exception {
 
-        logger.debug("Concrete class is: {}", getClass().getName());
-
-    	logger.debug("Setting up connector with properties: {}", config);
-
-    	if (appConfig != null) {
+        if (appConfig != null) {
     	    logger.debug("Connector already initialized, skipping re-initialization.");
     	    return;
         }
 
-    	provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
+        logger.debug("Setting up connector with properties: {}", config);
+
+        super.setIgnoreUnresolvablePlaceholders(config.isIgnoreUnresolvablePlaceholders());
+    	super.setSystemPropertiesModeName(config.getSystemPropertiesMode().name());
+    	super.setOrder(config.getOrder());
+
+        provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
     	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
