@@ -2,6 +2,7 @@ package org.mule.modules.caas.client;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.mule.modules.caas.ServiceConfiguration;
 import org.slf4j.Logger;
@@ -97,5 +98,13 @@ public class ClientUtils {
         }
     }
 
+    public static String buildAdminBaseUrl(String serviceBaseUrl) {
 
+        if (StringUtils.isEmpty(serviceBaseUrl)) {
+            return serviceBaseUrl;
+        }
+
+        //we will replace the last /configuration with /admin
+        return StringUtils.replace(serviceBaseUrl, "/configuration", "/admin");
+    }
 }

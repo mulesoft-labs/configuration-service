@@ -3,9 +3,11 @@ package org.mule.modules.caas.client;
 import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationNotFoundException;
 import org.mule.modules.caas.ConfigurationServiceException;
+import org.mule.modules.caas.ServiceConfiguration;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.modules.caas.model.ApplicationConfigurationBuilder;
 import org.mule.modules.caas.model.ApplicationDocument;
+import org.mule.modules.caas.model.ConfigurationDataWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +26,12 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
     private final String baseUrl;
     private final Client restClient;
+    private final ServiceConfiguration config;
 
-    public DefaultApplicationDataProvider(String baseUrl, Client restClient) {
+    public DefaultApplicationDataProvider(String baseUrl, Client restClient, ServiceConfiguration config) {
         this.baseUrl = baseUrl;
         this.restClient = restClient;
+        this.config = config;
     }
 
     @Override
@@ -57,15 +61,45 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
                 .path("dynamic")
                 .path(doc.getName());
 
-        return target.request().accept(doc.getContentType()).get(InputStream.class);
+        InputStream ret = target.request().accept(doc.getContentType()).get(InputStream.class);
+
+        if (app.getDataWrapper() != null) {
+            ret = app.getDataWrapper().wrapStream(ret);
+        }
+
+        return ret;
     }
 
     @Override
     public ApplicationConfiguration loadApplicationConfiguration(String name, String version, String environment) throws ConfigurationServiceException {
-        return loadApplicationConfiguration(name, version, environment, 50);
+
+        ConfigurationDataWrapper wrapper = loadEncryptionDataWrapper();
+
+        return loadApplicationConfiguration(name, version, environment, wrapper, 50);
     }
 
-    private ApplicationConfiguration loadApplicationConfiguration(String name, String version, String environment, int depth) throws ConfigurationServiceException {
+    private ConfigurationDataWrapper loadEncryptionDataWrapper() {
+
+        if (!config.isEnableClientDecryption()) {
+            return null;
+        }
+
+        String adminPath = ClientUtils.buildAdminBaseUrl(baseUrl);
+
+        WebTarget target = restClient.target(adminPath)
+                .path("security")
+                .path("wrappedKey");
+
+        Map<String, String> encKey = target.request().accept(MediaType.APPLICATION_JSON_TYPE).get(Map.class);
+
+
+        return EncryptionDataWrapper.builder()
+                .withServiceConfiguration(config)
+                .withWrappedKeyData(encKey)
+                .build();
+    }
+
+    private ApplicationConfiguration loadApplicationConfiguration(String name, String version, String environment, ConfigurationDataWrapper wrapper, int depth) throws ConfigurationServiceException {
         ApplicationConfigurationBuilder retBuilder = ApplicationConfiguration.builder()
                 .setName(name)
                 .setEnvironment(environment)
@@ -74,6 +108,10 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
         if (depth == 0) {
             logger.warn("Reached depth 0 while recursively load parent configurations. This may indicate a cycle in the parent/child relationship.");
             return retBuilder.build();
+        }
+
+        if (wrapper != null) {
+            retBuilder.setDataWrapper(wrapper);
         }
 
         //load from the API
@@ -101,7 +139,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
             String parentVersion = parent.get("version");
             String parentEnvironment = parent.get("environment");
 
-            ApplicationConfiguration parentConfig = loadApplicationConfiguration(parentName, parentVersion, parentEnvironment, depth - 1);
+            ApplicationConfiguration parentConfig = loadApplicationConfiguration(parentName, parentVersion, parentEnvironment, wrapper, depth - 1);
 
             retBuilder.parent(parentConfig);
         }
@@ -122,5 +160,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
         return retBuilder.build();
     }
+
+
 
 }

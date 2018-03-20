@@ -16,7 +16,7 @@ public class ApplicationDataProviderFactory {
             return new LocalApplicationDataProvider(config.getLocalEnvironmentName());
         } else {
             Client client = ClientUtils.buildRestClient(config);
-            return new DefaultApplicationDataProvider(config.getServiceUrl(), client);
+            return new DefaultApplicationDataProvider(config.getServiceUrl(), client, config);
         }
 
     }

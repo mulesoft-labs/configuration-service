@@ -122,6 +122,37 @@ public class ConnectorConfig implements ServiceConfiguration{
     @Placement(group = "Property Placeholder", order = 3)
     private SystemPropertiesMode systemPropertiesMode;
 
+
+    //encryption settings.
+	@Configurable
+	@Optional @Default("false")
+	@Placement(tab = "encryption", order = 1)
+    private boolean enableClientDecryption;
+
+	@Configurable
+	@Optional @Placement(tab = "encryption", order = 2)
+    private String clientDecryptionKeyStore;
+
+	@Configurable
+	@Optional @Password @Placement(tab = "encryption", order = 3)
+    private String clientDecryptionKeyStorePassword;
+
+	@Configurable
+	@Optional @Placement(tab = "encryption", order = 4)
+    private String macKeyAlias;
+
+	@Configurable
+	@Optional @Password @Placement(tab = "encryption", order = 5)
+    private String macKeyPassword;
+
+	@Configurable
+	@Optional @Placement(tab = "encryption", order = 6)
+	private String wrapKeyAlias;
+
+	@Configurable
+	@Optional @Password @Placement(tab = "encryption", order = 7)
+	private String wrapKeyPassword;
+
     @Override
     public String getApplication() {
         return application;
@@ -190,6 +221,69 @@ public class ConnectorConfig implements ServiceConfiguration{
 
 	public boolean isDisableHostNameVerification() {
 		return disableHostNameVerification;
+	}
+
+	@Override
+	public boolean isEnableClientDecryption() {
+		return enableClientDecryption;
+	}
+
+	@Override
+	public String getClientDecryptionKeyStore() {
+		return clientDecryptionKeyStore;
+	}
+
+	@Override
+	public String getClientDecryptionKeyStorePassword() {
+		return clientDecryptionKeyStorePassword;
+	}
+
+	@Override
+	public String getMacKeyAlias() {
+		return macKeyAlias;
+	}
+
+	@Override
+	public String getMacKeyPassword() {
+		return macKeyPassword;
+	}
+
+	@Override
+	public String getWrapKeyAlias() {
+		return wrapKeyAlias;
+	}
+
+	@Override
+	public String getWrapKeyPassword() {
+		return wrapKeyPassword;
+	}
+
+	public void setEnableClientDecryption(boolean enableClientDecryption) {
+		this.enableClientDecryption = enableClientDecryption;
+	}
+
+	public void setClientDecryptionKeyStore(String clientDecryptionKeyStore) {
+		this.clientDecryptionKeyStore = clientDecryptionKeyStore;
+	}
+
+	public void setClientDecryptionKeyStorePassword(String clientDecryptionKeyStorePassword) {
+		this.clientDecryptionKeyStorePassword = clientDecryptionKeyStorePassword;
+	}
+
+	public void setMacKeyAlias(String macKeyAlias) {
+		this.macKeyAlias = macKeyAlias;
+	}
+
+	public void setMacKeyPassword(String macKeyPassword) {
+		this.macKeyPassword = macKeyPassword;
+	}
+
+	public void setWrapKeyAlias(String wrapKeyAlias) {
+		this.wrapKeyAlias = wrapKeyAlias;
+	}
+
+	public void setWrapKeyPassword(String wrapKeyPassword) {
+		this.wrapKeyPassword = wrapKeyPassword;
 	}
 
 	public void setDisableHostNameVerification(boolean disableHostNameVerification) {

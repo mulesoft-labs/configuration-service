@@ -25,4 +25,18 @@ public interface ServiceConfiguration {
 
     boolean isDisableHostNameVerification();
 
+    boolean isEnableClientDecryption();
+
+    String getClientDecryptionKeyStore();
+
+    String getClientDecryptionKeyStorePassword();
+
+    String getMacKeyAlias();
+
+    String getMacKeyPassword();
+
+    String getWrapKeyAlias();
+
+    String getWrapKeyPassword();
+
 }

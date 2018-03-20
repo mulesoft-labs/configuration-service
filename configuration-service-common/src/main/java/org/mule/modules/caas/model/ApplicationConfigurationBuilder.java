@@ -12,6 +12,7 @@ public class ApplicationConfigurationBuilder {
     private Map<String, String> properties;
     private List<ApplicationConfiguration> parents;
     private List<ApplicationDocument> documents;
+    private ConfigurationDataWrapper dataWrapper;
 
     public ApplicationConfigurationBuilder setName(String name) {
         this.name = name;
@@ -43,6 +44,11 @@ public class ApplicationConfigurationBuilder {
         return this;
     }
 
+    public ApplicationConfigurationBuilder setDataWrapper(ConfigurationDataWrapper wrapper) {
+        this.dataWrapper = wrapper;
+        return this;
+    }
+
     public ApplicationConfiguration build() {
 
         if (parents == null) {
@@ -60,7 +66,8 @@ public class ApplicationConfigurationBuilder {
         return new ApplicationConfiguration(name, version, environment,
                 Collections.unmodifiableMap(properties),
                 Collections.unmodifiableList(parents),
-                Collections.unmodifiableList(documents));
+                Collections.unmodifiableList(documents),
+                dataWrapper);
     }
 
     public ApplicationConfigurationBuilder parent(ApplicationConfiguration config) {

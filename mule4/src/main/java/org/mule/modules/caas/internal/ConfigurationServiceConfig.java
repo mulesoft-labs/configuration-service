@@ -135,6 +135,41 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
         return disableHostNameVerification;
     }
 
+    @Override
+    public boolean isEnableClientDecryption() {
+        return false;
+    }
+
+    @Override
+    public String getClientDecryptionKeyStore() {
+        return null;
+    }
+
+    @Override
+    public String getClientDecryptionKeyStorePassword() {
+        return null;
+    }
+
+    @Override
+    public String getMacKeyAlias() {
+        return null;
+    }
+
+    @Override
+    public String getMacKeyPassword() {
+        return null;
+    }
+
+    @Override
+    public String getWrapKeyAlias() {
+        return null;
+    }
+
+    @Override
+    public String getWrapKeyPassword() {
+        return null;
+    }
+
     public void setDisableHostNameVerification(boolean disableHostNameVerification) {
         this.disableHostNameVerification = disableHostNameVerification;
     }

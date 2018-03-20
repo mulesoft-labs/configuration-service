@@ -1,6 +1,8 @@
 package org.mule.modules.caas.model;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
@@ -14,18 +16,22 @@ public class ApplicationConfiguration implements Serializable {
     private final Map<String, String> properties;
     private final List<ApplicationConfiguration> parents;
     private final List<ApplicationDocument> documents;
+    private final ConfigurationDataWrapper dataWrapper;
+
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfiguration.class);
 
     public static ApplicationConfigurationBuilder builder() {
         return new ApplicationConfigurationBuilder();
     }
 
-    ApplicationConfiguration(String name, String version, String environment, Map<String, String> properties, List<ApplicationConfiguration> parents, List<ApplicationDocument> documents) {
+    ApplicationConfiguration(String name, String version, String environment, Map<String, String> properties, List<ApplicationConfiguration> parents, List<ApplicationDocument> documents, ConfigurationDataWrapper dataWrapper) {
         this.name = name;
         this.version = version;
         this.environment = environment;
         this.properties = properties;
         this.parents = parents;
         this.documents = documents;
+        this.dataWrapper = dataWrapper;
     }
 
     public String getName() {
@@ -41,6 +47,13 @@ public class ApplicationConfiguration implements Serializable {
     }
 
     public Map<String, String> getProperties() {
+
+        Map<String, String> properties = this.properties;
+
+        if (dataWrapper != null) {
+            return dataWrapper.wrapProperties(properties);
+        }
+
         return properties;
     }
 
@@ -54,10 +67,19 @@ public class ApplicationConfiguration implements Serializable {
 
     public String readProperty(String key) {
 
+        logger.debug("Call to read key {}", key);
+
+        String prop = null;
+
+        String wrappedKey = findWrappedKey(key);
+
         //try with this one
-        String prop = properties.get(key);
+        prop = properties.get(wrappedKey);
 
         if (prop != null) {
+            if (dataWrapper != null) {
+                prop = dataWrapper.wrapValue(prop);
+            }
             return prop;
         }
 
@@ -70,6 +92,11 @@ public class ApplicationConfiguration implements Serializable {
             }
         }
         return null;
+
+    }
+
+    public ConfigurationDataWrapper getDataWrapper() {
+        return dataWrapper;
     }
 
     public ApplicationDocument findDocument(String name) {
@@ -89,6 +116,25 @@ public class ApplicationConfiguration implements Serializable {
         }
 
         return null;
+    }
+
+    private String findWrappedKey(String plainKey) {
+
+        if (dataWrapper == null) {
+            return plainKey;
+        }
+
+        logger.debug("Invoking data wrapper to unwrap existing keys...");
+
+        for(String wrappedKey : properties.keySet()) {
+            if (dataWrapper.wrapKey(wrappedKey).equals(plainKey)) {
+                return wrappedKey;
+            }
+        }
+
+        logger.debug("key not found, resorting to unwrapped key...");
+
+        return plainKey;
     }
 
 }
