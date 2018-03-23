@@ -70,7 +70,7 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
 
     @Parameter
     @Optional(defaultValue = "false")
-    @Placement(tab = "encryption", order = 1)
+    @Placement(tab = "Encryption", order = 1)
     private boolean enableClientDecryption;
 
     @Parameter
