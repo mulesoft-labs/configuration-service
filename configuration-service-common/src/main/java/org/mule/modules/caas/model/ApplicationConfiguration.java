@@ -14,7 +14,7 @@ public class ApplicationConfiguration implements Serializable {
     private final String version;
     private final String environment;
     private final Map<String, String> properties;
-    private final List<ApplicationConfiguration> parents;
+    private final List<ApplicationConfiguration> imports;
     private final List<ApplicationDocument> documents;
     private final ConfigurationDataWrapper dataWrapper;
 
@@ -24,12 +24,12 @@ public class ApplicationConfiguration implements Serializable {
         return new ApplicationConfigurationBuilder();
     }
 
-    ApplicationConfiguration(String name, String version, String environment, Map<String, String> properties, List<ApplicationConfiguration> parents, List<ApplicationDocument> documents, ConfigurationDataWrapper dataWrapper) {
+    ApplicationConfiguration(String name, String version, String environment, Map<String, String> properties, List<ApplicationConfiguration> imports, List<ApplicationDocument> documents, ConfigurationDataWrapper dataWrapper) {
         this.name = name;
         this.version = version;
         this.environment = environment;
         this.properties = properties;
-        this.parents = parents;
+        this.imports = imports;
         this.documents = documents;
         this.dataWrapper = dataWrapper;
     }
@@ -57,8 +57,8 @@ public class ApplicationConfiguration implements Serializable {
         return properties;
     }
 
-    public List<ApplicationConfiguration> getParents() {
-        return parents;
+    public List<ApplicationConfiguration> getImports() {
+        return imports;
     }
 
     public List<ApplicationDocument> getDocuments() {
@@ -83,10 +83,10 @@ public class ApplicationConfiguration implements Serializable {
             return prop;
         }
 
-        //if the property is not here, may be in one of the parents.
+        //if the property is not here, may be in one of the imports.
         //this method will navigate all the hierarchy looking for properties.
-        for (ApplicationConfiguration parent : parents) {
-            prop = parent.readProperty(key);
+        for (ApplicationConfiguration importedApp : imports) {
+            prop = importedApp.readProperty(key);
             if (prop != null) {
                 return prop;
             }
@@ -107,9 +107,9 @@ public class ApplicationConfiguration implements Serializable {
             }
         }
 
-        //or else, return from any of the parents.
-        for (ApplicationConfiguration parent : parents) {
-            ApplicationDocument doc = parent.findDocument(name);
+        //or else, return from any of the imports.
+        for (ApplicationConfiguration imporedApp : imports) {
+            ApplicationDocument doc = imporedApp.findDocument(name);
             if (doc != null) {
                 return doc;
             }

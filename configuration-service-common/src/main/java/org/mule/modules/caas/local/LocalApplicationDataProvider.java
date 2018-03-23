@@ -22,7 +22,7 @@ import static org.mule.modules.caas.util.ConfigurationServiceUtil.*;
  * Provider that loads data from the classpath instead of reaching out to configuration service.
  * Local config file should be called {localEnvName}/config.json and documents will be under {localEnvName}/documents
  * in the classpath. User need to be very intentional about the config json and we will not scan the classpath but blindly
- * try to load documents that are under the documents section of the json. Parent configs are not supported.
+ * try to load documents that are under the documents section of the json. Import configs are not supported.
  */
 public class LocalApplicationDataProvider implements ApplicationDataProvider {
 
@@ -89,8 +89,8 @@ public class LocalApplicationDataProvider implements ApplicationDataProvider {
             builder.document(new ApplicationDocument(type, key));
         }
 
-        if (app.containsKey("parents")) {
-            logger.warn("Local environment contains parents definition, which are not supported currently!");
+        if (app.containsKey("imports")) {
+            logger.warn("Local environment contains imports definition, which are not supported currently!");
         }
 
         return builder.build();

@@ -15,9 +15,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
@@ -45,8 +43,14 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
         //read it as a java map
         Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class);
 
-        logger.debug("Got settings from configuration server: {}", result);
+        //this potentially logs sensitive information
+        //we need to remove the properties before logging.
 
+        if (logger.isDebugEnabled()) {
+            Map<String, Object> loggableResult = new LinkedHashMap<>(result);
+            loggableResult.remove("properties");
+            logger.debug("Got settings from configuration server: {}", loggableResult);
+        }
 
         return result;
     }
@@ -106,7 +110,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
                 .setVersion(version);
 
         if (depth == 0) {
-            logger.warn("Reached depth 0 while recursively load parent configurations. This may indicate a cycle in the parent/child relationship.");
+            logger.warn("Reached depth 0 while recursively load importApp configurations. This may indicate a cycle in the importApp/child relationship.");
             return retBuilder.build();
         }
 
@@ -125,23 +129,23 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
         retBuilder.setProperties(properties);
 
-        //get the parent apps
-        List<Map<String, String>> parents = (List) appData.get("parents");
+        //get the importApp apps
+        List<Map<String, String>> imports = (List) appData.get("imports");
 
-        if (parents == null) {
-            parents = Collections.emptyList();
+        if (imports == null) {
+            imports = Collections.emptyList();
         }
 
-        //go recursively through the parents to build the list.
-        for (Map<String, String> parent : parents) {
+        //go recursively through the imports to build the list.
+        for (Map<String, String> importedApp : imports) {
 
-            String parentName = parent.get("application");
-            String parentVersion = parent.get("version");
-            String parentEnvironment = parent.get("environment");
+            String importName = importedApp.get("application");
+            String importVersion = importedApp.get("version");
+            String importEnvironment = importedApp.get("environment");
 
-            ApplicationConfiguration parentConfig = loadApplicationConfiguration(parentName, parentVersion, parentEnvironment, wrapper, depth - 1);
+            ApplicationConfiguration importConfig = loadApplicationConfiguration(importName, importVersion, importEnvironment, wrapper, depth - 1);
 
-            retBuilder.parent(parentConfig);
+            retBuilder.importApp(importConfig);
         }
 
         //get the documents

@@ -10,7 +10,7 @@ public class ApplicationConfigurationBuilder {
     private String version;
     private String environment;
     private Map<String, String> properties;
-    private List<ApplicationConfiguration> parents;
+    private List<ApplicationConfiguration> imports;
     private List<ApplicationDocument> documents;
     private ConfigurationDataWrapper dataWrapper;
 
@@ -34,8 +34,8 @@ public class ApplicationConfigurationBuilder {
         return this;
     }
 
-    public ApplicationConfigurationBuilder setParents(List<ApplicationConfiguration> parents) {
-        this.parents = parents;
+    public ApplicationConfigurationBuilder setImports(List<ApplicationConfiguration> imports) {
+        this.imports = imports;
         return this;
     }
 
@@ -51,8 +51,8 @@ public class ApplicationConfigurationBuilder {
 
     public ApplicationConfiguration build() {
 
-        if (parents == null) {
-            parents = Collections.emptyList();
+        if (imports == null) {
+            imports = Collections.emptyList();
         }
 
         if (properties == null) {
@@ -65,20 +65,20 @@ public class ApplicationConfigurationBuilder {
 
         return new ApplicationConfiguration(name, version, environment,
                 Collections.unmodifiableMap(properties),
-                Collections.unmodifiableList(parents),
+                Collections.unmodifiableList(imports),
                 Collections.unmodifiableList(documents),
                 dataWrapper);
     }
 
-    public ApplicationConfigurationBuilder parent(ApplicationConfiguration config) {
+    public ApplicationConfigurationBuilder importApp(ApplicationConfiguration config) {
 
         synchronized (this) {
-            if (parents == null) {
-                parents = new LinkedList<>();
+            if (imports == null) {
+                imports = new LinkedList<>();
             }
         }
 
-        parents.add(config);
+        imports.add(config);
 
         return this;
     }

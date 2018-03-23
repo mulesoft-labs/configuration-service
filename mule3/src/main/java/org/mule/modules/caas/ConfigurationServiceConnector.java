@@ -124,7 +124,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     }
 
 	/**
-     * Recursive method to read from the configuration service an app and its parents.
+     * Recursive method to read from the configuration service an app and its imports.
      * @param name the application name to read.
      * @param version the version to read.
      * @param environment the environment.
