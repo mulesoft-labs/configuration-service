@@ -67,6 +67,37 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
     @Placement(tab = Placement.SECURITY_TAB, order = 5)
     private boolean disableHostNameVerification;
 
+
+    @Parameter
+    @Optional(defaultValue = "false")
+    @Placement(tab = "encryption", order = 1)
+    private boolean enableClientDecryption;
+
+    @Parameter
+    @Optional @Placement(tab = "Encryption", order = 2)
+    private String clientDecryptionKeyStore;
+
+    @Parameter
+    @Optional @Password @Placement(tab = "Encryption", order = 3)
+    private String clientDecryptionKeyStorePassword;
+
+    @Parameter
+    @Optional @Placement(tab = "Encryption", order = 4)
+    private String macKeyAlias;
+
+    @Parameter
+    @Optional @Password @Placement(tab = "Encryption", order = 5)
+    private String macKeyPassword;
+
+    @Parameter
+    @Optional @Placement(tab = "Encryption", order = 6)
+    private String wrapKeyAlias;
+
+    @Parameter
+    @Optional @Password @Placement(tab = "Encryption", order = 7)
+    private String wrapKeyPassword;
+
+
     public String getServiceUrl() {
         return serviceUrl;
     }
@@ -137,37 +168,65 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
 
     @Override
     public boolean isEnableClientDecryption() {
-        return false;
+        return enableClientDecryption;
+    }
+
+    public void setEnableClientDecryption(boolean enableClientDecryption) {
+        this.enableClientDecryption = enableClientDecryption;
     }
 
     @Override
     public String getClientDecryptionKeyStore() {
-        return null;
+        return clientDecryptionKeyStore;
+    }
+
+    public void setClientDecryptionKeyStore(String clientDecryptionKeyStore) {
+        this.clientDecryptionKeyStore = clientDecryptionKeyStore;
     }
 
     @Override
     public String getClientDecryptionKeyStorePassword() {
-        return null;
+        return clientDecryptionKeyStorePassword;
+    }
+
+    public void setClientDecryptionKeyStorePassword(String clientDecryptionKeyStorePassword) {
+        this.clientDecryptionKeyStorePassword = clientDecryptionKeyStorePassword;
     }
 
     @Override
     public String getMacKeyAlias() {
-        return null;
+        return macKeyAlias;
+    }
+
+    public void setMacKeyAlias(String macKeyAlias) {
+        this.macKeyAlias = macKeyAlias;
     }
 
     @Override
     public String getMacKeyPassword() {
-        return null;
+        return macKeyPassword;
+    }
+
+    public void setMacKeyPassword(String macKeyPassword) {
+        this.macKeyPassword = macKeyPassword;
     }
 
     @Override
     public String getWrapKeyAlias() {
-        return null;
+        return wrapKeyAlias;
+    }
+
+    public void setWrapKeyAlias(String wrapKeyAlias) {
+        this.wrapKeyAlias = wrapKeyAlias;
     }
 
     @Override
     public String getWrapKeyPassword() {
-        return null;
+        return wrapKeyPassword;
+    }
+
+    public void setWrapKeyPassword(String wrapKeyPassword) {
+        this.wrapKeyPassword = wrapKeyPassword;
     }
 
     public void setDisableHostNameVerification(boolean disableHostNameVerification) {

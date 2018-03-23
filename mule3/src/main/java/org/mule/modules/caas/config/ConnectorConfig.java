@@ -126,31 +126,31 @@ public class ConnectorConfig implements ServiceConfiguration{
     //encryption settings.
 	@Configurable
 	@Optional @Default("false")
-	@Placement(tab = "encryption", order = 1)
+	@Placement(tab = "Encryption", order = 1)
     private boolean enableClientDecryption;
 
 	@Configurable
-	@Optional @Placement(tab = "encryption", order = 2)
+	@Optional @Placement(tab = "Encryption", order = 2)
     private String clientDecryptionKeyStore;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "encryption", order = 3)
+	@Optional @Password @Placement(tab = "Encryption", order = 3)
     private String clientDecryptionKeyStorePassword;
 
 	@Configurable
-	@Optional @Placement(tab = "encryption", order = 4)
+	@Optional @Placement(tab = "Encryption", order = 4)
     private String macKeyAlias;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "encryption", order = 5)
+	@Optional @Password @Placement(tab = "Encryption", order = 5)
     private String macKeyPassword;
 
 	@Configurable
-	@Optional @Placement(tab = "encryption", order = 6)
+	@Optional @Placement(tab = "Encryption", order = 6)
 	private String wrapKeyAlias;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "encryption", order = 7)
+	@Optional @Password @Placement(tab = "Encryption", order = 7)
 	private String wrapKeyPassword;
 
     @Override
@@ -263,27 +263,27 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public void setClientDecryptionKeyStore(String clientDecryptionKeyStore) {
-		this.clientDecryptionKeyStore = clientDecryptionKeyStore;
+		this.clientDecryptionKeyStore = readEnvironmentalProperties(clientDecryptionKeyStore);
 	}
 
 	public void setClientDecryptionKeyStorePassword(String clientDecryptionKeyStorePassword) {
-		this.clientDecryptionKeyStorePassword = clientDecryptionKeyStorePassword;
+		this.clientDecryptionKeyStorePassword = readEnvironmentalProperties(clientDecryptionKeyStorePassword);
 	}
 
 	public void setMacKeyAlias(String macKeyAlias) {
-		this.macKeyAlias = macKeyAlias;
+		this.macKeyAlias = readEnvironmentalProperties(macKeyAlias);
 	}
 
 	public void setMacKeyPassword(String macKeyPassword) {
-		this.macKeyPassword = macKeyPassword;
+		this.macKeyPassword = readEnvironmentalProperties(macKeyPassword);
 	}
 
 	public void setWrapKeyAlias(String wrapKeyAlias) {
-		this.wrapKeyAlias = wrapKeyAlias;
+		this.wrapKeyAlias = readEnvironmentalProperties(wrapKeyAlias);
 	}
 
 	public void setWrapKeyPassword(String wrapKeyPassword) {
-		this.wrapKeyPassword = wrapKeyPassword;
+		this.wrapKeyPassword = readEnvironmentalProperties(wrapKeyPassword);
 	}
 
 	public void setDisableHostNameVerification(boolean disableHostNameVerification) {
