@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
 import javax.crypto.IllegalBlockSizeException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class EncryptionDataWrapper implements ConfigurationDataWrapper {
 
     @Override
     public InputStream wrapStream(InputStream is) {
-        return null;
+        return new CipherInputStream(is, cipher);
     }
 
     @Override
