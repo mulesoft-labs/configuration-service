@@ -29,6 +29,13 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
     public static final String TRUSTPASSWD_PARAM = "trustStorePassword";
     public static final String DISABLEDNS_PARAM = "disableHostNameVerification";
     public static final String LOCALENV_PARAM = "localEnvironmentName";
+    public static final String ENABLECLIENTDEC_PARAM = "enableClientDecryption";
+    public static final String CLIENTDECKS_PARAM = "clientDecryptionKeyStore";
+    public static final String CLIENTDECKSPW_PARAM = "clientDecryptionKeyStorePassword";
+    public static final String CLIENTDECMAC_PARAM = "macKeyAlias";
+    public static final String CLIENTDECMACPW_PARAM = "macKeyPassword";
+    public static final String CLIENTDECWRAP_PARAM = "wrapKeyAlias";
+    public static final String CLIENTDECWRAPPW_PARAM = "wrapKeyPassword";
 
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationServicePropertiesProviderFactory.class);
@@ -61,6 +68,14 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             String localEnvironmentName = getOptionalStringParemeter(parameters, LOCALENV_PARAM);
             boolean disableDnsLookup = Boolean.parseBoolean(getOptionalStringParemeter(parameters, DISABLEDNS_PARAM));
 
+            //all encryption settings.
+            boolean enableClientDecryption = Boolean.parseBoolean(getOptionalStringParemeter(parameters, ENABLECLIENTDEC_PARAM));
+            String clientDecryptionKeyStore = getOptionalStringParemeter(parameters, CLIENTDECKS_PARAM);
+            String clientDecryptionKeyStorePassword = getOptionalStringParemeter(parameters, CLIENTDECKSPW_PARAM);
+            String macKeyAlias = getOptionalStringParemeter(parameters, CLIENTDECMAC_PARAM);
+            String macKeyPassword = getOptionalStringParemeter(parameters, CLIENTDECMACPW_PARAM);
+            String wrapKeyAlias = getOptionalStringParemeter(parameters, CLIENTDECWRAP_PARAM);
+            String wrapKeyPassword = getOptionalStringParemeter(parameters, CLIENTDECWRAPPW_PARAM);
 
 
             Preconditions.checkArgument(url != null, "Service URL must not be null");
@@ -80,6 +95,14 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             config.setTrustStore(trustStore);
             config.setTrustStorePassword(trustPassword);
             config.setLocalEnvironmentName(localEnvironmentName);
+
+            config.setEnableClientDecryption(enableClientDecryption);
+            config.setClientDecryptionKeyStore(clientDecryptionKeyStore);
+            config.setClientDecryptionKeyStorePassword(clientDecryptionKeyStorePassword);
+            config.setWrapKeyAlias(wrapKeyAlias);
+            config.setWrapKeyPassword(wrapKeyPassword);
+            config.setMacKeyAlias(macKeyAlias);
+            config.setMacKeyPassword(macKeyPassword);
 
             ApplicationDataProvider provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
