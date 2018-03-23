@@ -12,6 +12,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -52,8 +53,8 @@ public class EncryptionDataWrapperBuilder {
 
     private EncryptionDataWrapper doBuild() throws Exception {
 
-        String keyAlgorithm = wrappedKeyData.get("algorithm");
-        String cipherAlgoritm = wrappedKeyData.get("cipherAlgorithm");
+        String algorithm = new String(Base64.decodeBase64(wrappedKeyData.get("algorithm")));
+        byte[] parameters = Base64.decodeBase64(wrappedKeyData.get("parameters"));
         byte[] wrappedKey = Base64.decodeBase64(wrappedKeyData.get("encodedKey"));
         String signature = wrappedKeyData.get("macSignature");
 
@@ -77,7 +78,9 @@ public class EncryptionDataWrapperBuilder {
         //init for unwrapping
         cipher.init(Cipher.UNWRAP_MODE, unwrapKey);
 
-        Key encKey = cipher.unwrap(wrappedKey, keyAlgorithm, Cipher.SECRET_KEY);
+        String[] algorithmComponents = algorithm.split("/");
+
+        Key encKey = cipher.unwrap(wrappedKey, algorithmComponents[0], Cipher.SECRET_KEY);
 
         //verify the signature
         Mac mac = Mac.getInstance(MAC_KEY_ALG);
@@ -92,11 +95,12 @@ public class EncryptionDataWrapperBuilder {
             throw new RuntimeException("Signature could not be verified, encryption key may be counterfeit.");
         }
 
-        Cipher decCipher = Cipher.getInstance(cipherAlgoritm);
+        Cipher decCipher = Cipher.getInstance(algorithm);
 
-        IvParameterSpec parameterSpec = new IvParameterSpec(encKey.getEncoded());
+        AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(algorithmComponents[0]);
+        algorithmParameters.init(parameters);
 
-        decCipher.init(Cipher.DECRYPT_MODE, encKey, parameterSpec);
+        decCipher.init(Cipher.DECRYPT_MODE, encKey, algorithmParameters);
 
         return new EncryptionDataWrapper(decCipher);
     }
