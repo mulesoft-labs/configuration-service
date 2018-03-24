@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%msg%n"/>
+        </Console>
+        <RollingFile name="file" fileName="${sys:app.home}${sys:file.separator}logs${sys:file.separator}execution.log"
+                     filePattern="${sys:app.home}${sys:file.separator}logs${sys:file.separator}execution-%i.log">
+            <PatternLayout pattern="%-5level %d{HH:mm:ss.SSS} [%t] %logger{36} - %msg%n"/>
+            <SizeBasedTriggeringPolicy size="10 MB" />
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="output" level="info">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <AsyncRoot level="debug">
+            <AppenderRef ref="file"/>
+        </AsyncRoot>
+    </Loggers>
+</Configuration>

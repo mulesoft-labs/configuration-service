@@ -17,8 +17,10 @@
         <commons.lang.version>3.5</commons.lang.version>
         <commons.codec.version>1.9</commons.codec.version>
         <commons.io.version>1.3.2</commons.io.version>
+        <commons.cli.version>1.4</commons.cli.version>
         <log4j2.version>2.9.1</log4j2.version>
         <lmax.disruptor.version>3.3.7</lmax.disruptor.version>
+        <snakeyaml.version>1.18</snakeyaml.version>
     </properties>
 
     <build>
@@ -28,6 +30,8 @@
                 <artifactId>appassembler-maven-plugin</artifactId>
                 <version>1.10</version>
                 <configuration>
+                    <configurationDirectory>conf</configurationDirectory>
+                    <copyConfigurationDirectory>true</copyConfigurationDirectory>
                     <programs>
                         <program>
                             <mainClass>org.mule.modules.caas.cli.Main</mainClass>
@@ -98,6 +102,20 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons.lang.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>${commons.cli.version}</version>
+        </dependency>
+
+        <!-- to parse yaml -->
+
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
         </dependency>
 
         <!-- Dependencies required only to run the app -->
