@@ -37,7 +37,7 @@
 
         <dependency>
             <groupId>org.mule.modules.caas</groupId>
-            <artifactId>configuration-services-common</artifactId>
+            <artifactId>configuration-service-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 

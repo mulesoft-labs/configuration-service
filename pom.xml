@@ -12,6 +12,7 @@
         <module>configuration-service-common</module>
         <module>mule3</module>
 		<module>mule4</module>
+		<module>configuration-service-cli</module>
     </modules>
 
 </project>
