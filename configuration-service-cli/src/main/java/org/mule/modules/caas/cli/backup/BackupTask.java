@@ -2,8 +2,7 @@ package org.mule.modules.caas.cli.backup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.mule.modules.caas.cli.CommandLineTask;
+import org.mule.modules.caas.cli.common.AbstractAPITask;
 import org.mule.modules.caas.cli.config.CliConfig;
 import org.mule.modules.caas.cli.config.ConfigurationValidator;
 import org.mule.modules.caas.cli.config.ServiceConfigurationAdapter;
@@ -24,7 +23,7 @@ import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class BackupTask implements CommandLineTask {
+public class BackupTask extends AbstractAPITask {
 
     private static final Logger internalLogger = LoggerFactory.getLogger(BackupTask.class);
 
@@ -87,7 +86,7 @@ public class BackupTask implements CommandLineTask {
     private boolean doBackup(CliConfig config, File backupDir, Logger logger) {
         try {
 
-            Client restClient = ClientUtils.buildRestClient(ServiceConfigurationAdapter.get(config));
+            Client restClient = buildClient(config);
 
 
             List<Map<String, ?>> apps = retrieveApps(restClient, config, logger);
