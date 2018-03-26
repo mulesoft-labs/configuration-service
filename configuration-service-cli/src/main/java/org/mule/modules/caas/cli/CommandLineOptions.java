@@ -24,8 +24,7 @@ public class CommandLineOptions {
 
         Options options = new Options();
 
-        Option help = Option.builder()
-                .argName("h")
+        Option help = Option.builder("h")
                 .desc("Prints the help")
                 .longOpt("help")
                 .build();

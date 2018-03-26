@@ -105,7 +105,13 @@ public final class CliConfigBuilder {
             return new CliConfig();
         }
 
-        return yaml.loadAs(is, CliConfig.class);
+        CliConfig ret = yaml.loadAs(is, CliConfig.class);
+
+        if (ret == null) {
+            ret = new CliConfig();
+        }
+
+        return ret;
     }
 
     private void setDefaults(CliConfig config) {
