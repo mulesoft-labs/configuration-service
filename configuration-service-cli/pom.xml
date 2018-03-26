@@ -9,7 +9,7 @@
 	<name>Configuration Service Connector :: CLI Tools</name>
 
     <properties>
-        <jaxrs.api.version>2.0</jaxrs.api.version>
+        <jaxrs.api.version>2.1</jaxrs.api.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <jersey.client.version>2.26</jersey.client.version>
@@ -72,6 +72,13 @@
             <artifactId>jersey-client</artifactId>
             <version>${jersey.client.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>${jersey.client.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>

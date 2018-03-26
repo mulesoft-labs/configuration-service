@@ -10,7 +10,7 @@ public class ServiceConfigurationAdapter implements ServiceConfiguration {
 
     private final CliConfig delegate;
 
-    public ServiceConfigurationAdapter get(CliConfig config) {
+    public static ServiceConfigurationAdapter get(CliConfig config) {
         return new ServiceConfigurationAdapter(config);
     }
 
