@@ -7,15 +7,22 @@ import org.mule.modules.caas.cli.config.CliConfig;
 import org.mule.modules.caas.cli.config.ConfigurationValidator;
 import org.mule.modules.caas.cli.config.ServiceConfigurationAdapter;
 import org.mule.modules.caas.client.ClientUtils;
-import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import java.io.*;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class BackupTask implements CommandLineTask {
+
+    private static final Logger internalLogger = LoggerFactory.getLogger(BackupTask.class);
+
     @Override
     public boolean runTask(CliConfig config, Logger outputLogger, String... taskArguments) {
 
@@ -43,11 +50,17 @@ public class BackupTask implements CommandLineTask {
             return true;
         }
 
-        if (!backupDir.isDirectory()) {
+        if (backupDir.exists() && !backupDir.isDirectory()) {
             return false;
         }
 
-        return backupDir.mkdirs();
+        try {
+            Files.createDirectories(backupDir.toPath());
+            return true;
+        } catch (IOException ex){
+            internalLogger.error("Could not create directores!!", ex);
+            return false;
+        }
     }
 
     private File buildBackupDir(String backupsDirectory, String... commandArgs) {
@@ -118,7 +131,8 @@ public class BackupTask implements CommandLineTask {
         }
 
         File docsDir = new File(backupDir.getPath() + File.separator + dirname);
-        docsDir.mkdir();
+
+        Files.createDirectory(docsDir.toPath());
 
         for(Map<String, String> doc : docs) {
 
