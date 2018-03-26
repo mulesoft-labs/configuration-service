@@ -49,14 +49,7 @@ public class CommandLineOptions {
                 TaskProvider tp = providersMap.get(opt.getOpt());
 
                 if (opt.getOpt().equals("h")) {
-                    ret.put((CommandLineTask)(config, logger, arguments) -> {
-                        HelpFormatter formatter = new HelpFormatter();
-                        formatter.printHelp("cmd1 {aruments} cmd2 {arguments} cmd3..."
-                                ,"Commands are:"
-                                , options
-                                , "");
-                        return true;
-                    }, emptyArgs);
+                    putHelp(ret, options, emptyArgs);
                     continue;
                 }
 
@@ -66,6 +59,10 @@ public class CommandLineOptions {
                 }
 
                 ret.put(tp.buildTask(), optValues);
+            }
+
+            if (ret.isEmpty()) {
+                putHelp(ret, options, emptyArgs);
             }
 
             return ret;
@@ -84,6 +81,17 @@ public class CommandLineOptions {
         providers.forEach(ret::add);
 
         return ret;
+    }
+
+    private void putHelp(Map ret, Options options, String[] args) {
+        ret.put((CommandLineTask)(config, logger, arguments) -> {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("cmd1 {aruments} cmd2 {arguments} cmd3..."
+                    ,"Commands are:"
+                    , options
+                    , "");
+            return true;
+        }, args);
     }
 
 }

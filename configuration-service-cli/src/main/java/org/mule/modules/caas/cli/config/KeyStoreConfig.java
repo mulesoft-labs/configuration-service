@@ -9,7 +9,7 @@ public class KeyStoreConfig implements Serializable {
 
     private String location;
 
-    private char[] password;
+    private String password;
 
     private String type;
 
@@ -21,11 +21,11 @@ public class KeyStoreConfig implements Serializable {
         this.location = location;
     }
 
-    public char[] getPassword() {
+    public String getPassword() {
         return password;
     }
 
-    public void setPassword(char[] password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 

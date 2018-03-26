@@ -1,0 +1,6 @@
+backupsDirectory: backups
+disableSSLHostnameVerification: false
+jobTimeout:
+  duration: 1
+  unit: MINUTES
+serviceUrl: http://localhost:8080/api/configuration

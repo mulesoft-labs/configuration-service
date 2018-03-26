@@ -9,7 +9,7 @@ public class KeyStoreKey implements Serializable {
 
     private String alias;
 
-    private char[] password;
+    private String password;
 
     public String getAlias() {
         return alias;
@@ -19,11 +19,11 @@ public class KeyStoreKey implements Serializable {
         this.alias = alias;
     }
 
-    public char[] getPassword() {
+    public String getPassword() {
         return password;
     }
 
-    public void setPassword(char[] password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 }

@@ -1,1 +1,2 @@
 org.mule.modules.caas.cli.backup.BackupProvider
+org.mule.modules.caas.cli.defsettings.DefaultSettingsProvider
