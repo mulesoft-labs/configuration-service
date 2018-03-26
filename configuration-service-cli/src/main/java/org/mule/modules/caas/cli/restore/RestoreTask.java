@@ -83,10 +83,23 @@ public class RestoreTask extends AbstractAPITask {
 
         Client restClient = buildClient(config);
 
+        EncryptionProcessor encryptionProcessor = null;
+
+        if (config.isEncryptionEnabled()) {
+            encryptionProcessor = new EncryptionProcessor(
+                    retrieveEncryptionSettings(config, restClient),
+                    restoreFolder,
+                    config,
+                    outputLogger);
+        } else {
+            //noop!
+            encryptionProcessor = new EncryptionProcessor();
+        }
+
         try {
 
             for (File appConfigFile : configs) {
-                restoreApplication(restClient, config, appConfigFile, configs, loadedApps, outputLogger);
+                restoreApplication(restClient, config, appConfigFile, configs, loadedApps, outputLogger, encryptionProcessor);
             }
 
         } catch (Exception ex) {
@@ -97,9 +110,9 @@ public class RestoreTask extends AbstractAPITask {
         return true;
     }
 
-    private void restoreApplication(Client restClient, CliConfig cliConfig, File appConfigFile, Set<File> configs, Set<String> loadedApps, Logger outputLogger) throws IOException {
+    private void restoreApplication(Client restClient, CliConfig cliConfig, File appConfigFile, Set<File> configs, Set<String> loadedApps, Logger outputLogger, EncryptionProcessor encryptionProcessor) throws IOException {
         ObjectMapper om = new ObjectMapper();
-        Map<String, ?> app = om.readValue(new FileInputStream(appConfigFile), Map.class);
+        Map<String, Object> app = om.readValue(new FileInputStream(appConfigFile), Map.class);
 
         internalLogger.debug("Attempting to load {}", appConfigFile.getName());
 
@@ -132,7 +145,7 @@ public class RestoreTask extends AbstractAPITask {
                 throw new RuntimeException("Inconsistent backup!");
             }
             //recurse
-            restoreApplication(restClient, cliConfig, importedAppFile, configs, loadedApps, outputLogger);
+            restoreApplication(restClient, cliConfig, importedAppFile, configs, loadedApps, outputLogger, encryptionProcessor);
         }
 
         //after making sure we've loaded the parents, we can now proceed to load the current app.
@@ -144,12 +157,16 @@ public class RestoreTask extends AbstractAPITask {
         //to satisfy the dependency.
         app.remove("documents");
 
+        //recrypt properties if possible
+        Map<String, String> props = encryptionProcessor.recryptProperties( (Map<String, String>) app.get("properties"));
+        app.put("properties", props);
+
         //try send the app
         tryPostOrPut(restClient, cliConfig, app, outputLogger);
 
         if (documents != null && !documents.isEmpty()) {
             //then post the documents
-            tryPutDocuments(restClient, cliConfig, new File(applicationDataDir), app, documents, outputLogger);
+            tryPutDocuments(restClient, cliConfig, new File(applicationDataDir), app, documents, outputLogger, encryptionProcessor);
         }
 
         //aaand we're done
@@ -186,7 +203,7 @@ public class RestoreTask extends AbstractAPITask {
         }
     }
 
-    private void tryPutDocuments(Client restClient, CliConfig cliConfig, File appDataDir, Map<String, ?> app, List<Map<String, String>> documents, Logger outputLogger) throws IOException {
+    private void tryPutDocuments(Client restClient, CliConfig cliConfig, File appDataDir, Map<String, ?> app, List<Map<String, String>> documents, Logger outputLogger, EncryptionProcessor encryptionProcessor) throws IOException {
         //with documents is easier on the one hand.
         if (!appDataDir.exists()) {
             outputLogger.error("Application has documents but backup does not contain a data directory for the app!");
@@ -206,7 +223,7 @@ public class RestoreTask extends AbstractAPITask {
                     .path("dynamic")
                     .path(key)
                     .request()
-                    .put(Entity.entity(new FileInputStream(docFile), type));
+                    .put(Entity.entity(encryptionProcessor.recryptionStream(new FileInputStream(docFile)), type));
 
             if (resp.getStatus() != 202) {
                 outputLogger.error("Could not upload document!");

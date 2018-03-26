@@ -170,19 +170,9 @@ public class BackupTask extends AbstractAPITask {
 
     private void backupEncryptionKey(Client restClient, CliConfig config, File backupDir, Logger logger) throws IOException, GeneralSecurityException {
 
-        String adminPath = ClientUtils.buildAdminBaseUrl(config.getServiceUrl());
+        Map<String, String> encKeyData = retrieveEncryptionSettings(config, restClient);
 
-        WebTarget target = restClient.target(adminPath)
-                .path("security")
-                .path("wrappedKey");
-
-        Map<String, String> encKeyData = target.request().accept(MediaType.APPLICATION_JSON_TYPE).get(Map.class);
-
-
-        Key encKey = EncryptionDataWrapper.builder()
-                .withServiceConfiguration(ServiceConfigurationAdapter.get(config))
-                .withWrappedKeyData(encKeyData)
-                .buildWrapperKey();
+        Key encKey = retrieveRemoteKey(encKeyData, config);
 
         String keyStoreFilename = backupDir.getPath() + File.separator + "enc-keys.jceks";
         String jsonFilename = backupDir.getPath() + File.separator + "enc-props.json";

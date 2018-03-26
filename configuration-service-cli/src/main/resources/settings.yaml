@@ -4,3 +4,15 @@ jobTimeout:
   duration: 1
   unit: MINUTES
 serviceUrl: http://localhost:8080/api/configuration
+
+encryptionEnabled: true
+clientEncryptionKeyStore:
+  location: enc-default.jceks
+  password: changeit
+  type: JCEKS
+wrapKey:
+  alias: default-wrap-key
+  password: changeit
+macKey:
+  alias: default-mac-key
+  password: changeit

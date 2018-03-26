@@ -27,7 +27,24 @@ public class CliUtils {
             logger.info("Please re-type for verification: ");
             ver = readPassword();
 
-        } while (ArrayUtils.getLength(password) > minLenght && !Arrays.equals(password, ver));
+        } while (ArrayUtils.getLength(password) < minLenght || !Arrays.equals(password, ver));
+
+        return password;
+    }
+
+    public static char[] readExistingPassword(String prompt, Logger logger, int minLength) {
+
+        char[] password = null;
+
+        do {
+            logger.info(prompt);
+            password = readPassword();
+
+            if (ArrayUtils.getLength(password) < minLength) {
+                logger.info("Password does not meet the min length {}", minLength);
+            }
+
+        } while (ArrayUtils.getLength(password) < minLength);
 
         return password;
     }
