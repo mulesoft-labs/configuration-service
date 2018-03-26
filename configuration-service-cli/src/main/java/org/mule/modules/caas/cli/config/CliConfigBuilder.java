@@ -130,7 +130,7 @@ public final class CliConfigBuilder {
             t.setUnit(TimeUnit.HOURS);
         }
 
-        logger.info("Tool will time out in {} {}", t.getDuration(), t.getUnit().name());
+        logger.info("The execution of this tool will time out in {} {}", t.getDuration(), t.getUnit().name());
     }
 
 }
