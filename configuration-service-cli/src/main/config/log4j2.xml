@@ -2,8 +2,16 @@
 <Configuration status="info">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
+            <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="ACCEPT"/>
             <PatternLayout pattern="%msg%n"/>
         </Console>
+
+        <Console name="ConsoleError" target="SYSTEM_ERR">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="[%-5level] %msg%n"/>
+        </Console>
+
+
         <RollingFile name="file" fileName="${sys:app.home}${sys:file.separator}logs${sys:file.separator}execution.log"
                      filePattern="${sys:app.home}${sys:file.separator}logs${sys:file.separator}execution-%i.log">
             <PatternLayout pattern="%-5level %d{HH:mm:ss.SSS} [%t] %logger{36} - %msg%n"/>
@@ -14,7 +22,9 @@
     <Loggers>
         <Logger name="output" level="info">
             <AppenderRef ref="Console" />
+            <AppenderRef ref="ConsoleError" />
         </Logger>
+
         <AsyncRoot level="debug">
             <AppenderRef ref="file"/>
         </AsyncRoot>

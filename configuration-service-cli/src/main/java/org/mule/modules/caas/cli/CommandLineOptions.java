@@ -45,24 +45,27 @@ public class CommandLineOptions {
             CommandLine result = parser.parse(options, args);
 
             for(Option opt :result.getOptions()) {
+
                 TaskProvider tp = providersMap.get(opt.getOpt());
+
+                if (opt.getOpt().equals("h")) {
+                    ret.put((CommandLineTask)(config, logger, arguments) -> {
+                        HelpFormatter formatter = new HelpFormatter();
+                        formatter.printHelp("cmd1 {aruments} cmd2 {arguments} cmd3..."
+                                ,"Commands are:"
+                                , options
+                                , "");
+                        return true;
+                    }, emptyArgs);
+                    continue;
+                }
+
                 String[] optValues = opt.getValues();
                 if (optValues == null) {
-                    optValues = new String[0];
+                    optValues = emptyArgs;
                 }
 
                 ret.put(tp.buildTask(), optValues);
-            }
-
-            if (result.getOptions().length == 0 || result.hasOption("h")) {
-                ret.put((CommandLineTask)(config, logger, arguments) -> {
-                    HelpFormatter formatter = new HelpFormatter();
-                    formatter.printHelp("cmd1 {aruments} cmd2 {arguments} cmd3..."
-                            ,"Commands are:"
-                            , options
-                            , "");
-                    return true;
-                }, emptyArgs);
             }
 
             return ret;

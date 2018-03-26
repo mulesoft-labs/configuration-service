@@ -31,13 +31,13 @@ public class Main {
                 .withOutputLogger(outputLogger)
                 .applyDefaults();
 
-        configBuilder.withValidator((config, logger) -> config.getJobTimeout() != null);
+        configBuilder.withValidator((config, outLogger) -> config.getJobTimeout() != null);
 
         taskMap.entrySet().stream()
                 .forEach( e -> configBuilder.withValidator(e.getKey().validator(e.getValue()).orElse(null)));
 
         //read the config.
-        CliConfig config = configBuilder.build().orElseThrow(() -> new RuntimeException("Could not load config!"));
+        CliConfig config = configBuilder.build().orElseThrow(() -> new RuntimeException("Invalid configuration!"));
 
         JobScheduler js = new JobScheduler(outputLogger, config, taskMap);
         js.execute();
