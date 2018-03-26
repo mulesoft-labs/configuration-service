@@ -196,7 +196,7 @@ public class ConnectorConfig implements ServiceConfiguration{
 	}
 
 	public String getTrustStorePassword() {
-		return readEnvironmentalProperties(trustStorePassword);
+		return trustStorePassword;
 	}
 
 	public void setTrustStorePassword(String trustStorePassword) {
