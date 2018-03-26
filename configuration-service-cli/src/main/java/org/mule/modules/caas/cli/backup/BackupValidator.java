@@ -24,6 +24,23 @@ public class BackupValidator extends ApiCallValidator {
             return false;
         }
 
+        if (config.isEncryptionEnabled()) {
+            if (config.getClientEncryptionKeyStore() == null) {
+                loggerToUse.error("Encryption keystore not configured in settings.");
+                return false;
+            }
+
+            if (config.getWrapKey() == null) {
+                loggerToUse.error("Wrapping key is not configured in settings.");
+                return false;
+            }
+
+            if (config.getMacKey() == null) {
+                loggerToUse.error("Mac key is not configured in settings.");
+                return false;
+            }
+        }
+
         return true;
     }
 }

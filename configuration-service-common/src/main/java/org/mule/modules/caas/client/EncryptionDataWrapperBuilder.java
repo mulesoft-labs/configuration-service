@@ -51,10 +51,9 @@ public class EncryptionDataWrapperBuilder {
 
     }
 
-    private EncryptionDataWrapper doBuild() throws Exception {
+    public Key buildWrapperKey() throws IOException, GeneralSecurityException {
 
         String algorithm = new String(Base64.decodeBase64(wrappedKeyData.get("algorithm")));
-        byte[] parameters = Base64.decodeBase64(wrappedKeyData.get("parameters"));
         byte[] wrappedKey = Base64.decodeBase64(wrappedKeyData.get("encodedKey"));
         String signature = wrappedKeyData.get("macSignature");
 
@@ -94,6 +93,17 @@ public class EncryptionDataWrapperBuilder {
             logger.error("Signature not passed!! orig {}, new {}", signature, verSignature);
             throw new RuntimeException("Signature could not be verified, encryption key may be counterfeit.");
         }
+
+        return encKey;
+    }
+
+    private EncryptionDataWrapper doBuild() throws Exception {
+
+        String algorithm = new String(Base64.decodeBase64(wrappedKeyData.get("algorithm")));
+        byte[] parameters = Base64.decodeBase64(wrappedKeyData.get("parameters"));
+        String[] algorithmComponents = algorithm.split("/");
+
+        Key encKey = buildWrapperKey();
 
         Cipher decCipher = Cipher.getInstance(algorithm);
 

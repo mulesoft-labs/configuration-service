@@ -2,22 +2,27 @@ package org.mule.modules.caas.cli.backup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mule.modules.caas.cli.CommandLineTask;
 import org.mule.modules.caas.cli.config.CliConfig;
 import org.mule.modules.caas.cli.config.ConfigurationValidator;
 import org.mule.modules.caas.cli.config.ServiceConfigurationAdapter;
+import org.mule.modules.caas.cli.utils.CliUtils;
 import org.mule.modules.caas.client.ClientUtils;
+import org.mule.modules.caas.client.EncryptionDataWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.nio.file.Files;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.KeyStore;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class BackupTask implements CommandLineTask {
 
@@ -91,6 +96,9 @@ public class BackupTask implements CommandLineTask {
                 backupApplication(restClient, config, backupDir, appMap, logger);
             }
 
+            if (config.isEncryptionEnabled()) {
+                backupEncryptionKey(restClient, config, backupDir, logger);
+            }
 
             return true;
         } catch (Exception ex) {
@@ -160,6 +168,49 @@ public class BackupTask implements CommandLineTask {
         //make the api call to retrieve all applications.
         return restClient.target(config.getServiceUrl()).request().get(List.class);
     }
+
+    private void backupEncryptionKey(Client restClient, CliConfig config, File backupDir, Logger logger) throws IOException, GeneralSecurityException {
+
+        String adminPath = ClientUtils.buildAdminBaseUrl(config.getServiceUrl());
+
+        WebTarget target = restClient.target(adminPath)
+                .path("security")
+                .path("wrappedKey");
+
+        Map<String, String> encKeyData = target.request().accept(MediaType.APPLICATION_JSON_TYPE).get(Map.class);
+
+
+        Key encKey = EncryptionDataWrapper.builder()
+                .withServiceConfiguration(ServiceConfigurationAdapter.get(config))
+                .withWrappedKeyData(encKeyData)
+                .buildWrapperKey();
+
+        String keyStoreFilename = backupDir.getPath() + File.separator + "enc-keys.jceks";
+        String jsonFilename = backupDir.getPath() + File.separator + "enc-props.json";
+
+        logger.info("Saving encryption keys to: {}", keyStoreFilename);
+
+        KeyStore ks = KeyStore.getInstance(config.getClientEncryptionKeyStore().getType());
+        ks.load(null, null);
+
+        char[] keyPassword = CliUtils.readPassword("Please type a password for the key: ", logger, 4);
+
+        ks.setKeyEntry("enc-key", encKey, keyPassword, null);
+
+        char[] password = CliUtils.readPassword("Please type a password for the new keystore: ", logger, 4);
+        ks.store(new FileOutputStream(keyStoreFilename), password);
+
+        logger.info("Saving encryption options to: {}", jsonFilename);
+
+        //remove info we stored in a better way.
+        encKeyData.remove("encodedKey");
+        encKeyData.remove("macSignature");
+
+        ObjectMapper om = new ObjectMapper();
+
+        om.writeValue(new FileWriter(jsonFilename), encKeyData);
+    }
+
 
 
     @Override
