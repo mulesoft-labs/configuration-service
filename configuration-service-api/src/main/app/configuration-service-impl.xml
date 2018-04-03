@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+	<sub-flow name="post-configuration-subflow">
+		<dw:transform-message doc:name="Configuration">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+
+	application : payload.application,
+	version : payload.version,
+	environment : payload.environment,
+	imports : payload.imports default [],
+	documents: payload.documents default [],
+	properties : payload.properties mapObject (value, key) -> {
+		(key replace "." with "__") : value
+	} unless payload.properties == null otherwise {}
+ }]]></dw:set-payload>
+		</dw:transform-message>
+		<message-properties-transformer scope="invocation" mimeType="application/java" doc:name="Extract Configuration Keys">
+			<add-message-property key="configVersion" value="#[payload.version]" />
+			<add-message-property key="env" value="#[payload.environment]" />
+			<add-message-property key="application" value="#[payload.application]" />
+		</message-properties-transformer>
+		<logger message="Inserting Document #[payload]" level="INFO" doc:name="Log Configuration" />
+		<validation:all doc:name="Validate App Env And version">
+			<validation:validations>
+                <validation:is-not-empty value="#[flowVars.application]" message="Application name can't be blank;400"/>
+                <validation:is-not-empty value="#[flowVars.env]" message="Environment Can't be blank;400"/>
+                <validation:is-not-empty value="#[flowVars.configVersion]" message="Configuration version can't be blank;400"/>
+			</validation:validations>
+		</validation:all>
+		<enricher target="#[flowVars['existingConfiguration']]" doc:name="Message Enricher">
+			<flow-ref name="findConfigBy-appVersionAndEnv-subflow" doc:name="findConfigBy-appVersionAndEnv-subflow" />
+		</enricher>
+		<validation:all doc:name="Validate Exist Configuration">
+			<validation:validations>
+                <validation:is-null value="#[flowVars.existingConfiguration]" message="Existing configuration found for application: #[flowVars.application], version: #[flowVars.configVersion], env: #[flowVars.env];400"/>
+			</validation:validations>
+		</validation:all>
+		<mongo:insert-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" doc:name="Insert Configuration" />
+		<logger message="Document Saved Successfully" level="INFO" doc:name="Log Successfull Saved" />
+	</sub-flow>
+	<sub-flow name="retrieve-configuration-subflow">
+		<flow-ref name="findConfigBy-appVersionAndEnv-subflow" doc:name="findConfigBy-appVersionAndEnv-subflow" />
+		<validation:all doc:name="Validate Configuration">
+			<validation:validations>
+                <validation:is-not-null value="#[payload]" message="No configuration found for Application : #[flowVars.application], version : #[flowVars.configVersion], env: #[flowVars.env];404"/>
+			</validation:validations>
+		</validation:all>
+        <enricher target="#[flowVars['documents']]" doc:name="Message Enricher">
+            <flow-ref name="findDocuments-byObjectId-subflow" doc:name="findDocuments-byObjectId-subflow"/>
+        </enricher>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload ++ {documents : flowVars.documents map (doc) -> {
+	key : doc.key,
+	type : doc.type
+}}]]></dw:set-payload>
+        </dw:transform-message>
+	</sub-flow>
+	<sub-flow name="findConfigBy-appVersionAndEnv-subflow">
+		<dw:transform-message doc:name="Prapare Retrieve Query">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	application: flowVars.application,
+	version : flowVars.configVersion,
+	environment: flowVars.env
+
+}]]></dw:set-payload>
+		</dw:transform-message>
+		<logger message="Find Configuration Query #[payload]" level="INFO" doc:name="Log Retrieve Query" />
+		<mongo:find-one-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" failOnNotFound="false" doc:name="Find One Document" />
+		<set-variable variableName="objectId" value="#[payload == null ? '' : (payload['_id']).toString()]" mimeType="application/java" doc:name="Set ObjectId" />
+		<dw:transform-message doc:name="Transform Message">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+
+{
+
+	application : payload.application,
+	version : payload.version,
+	environment : payload.environment,
+	imports : payload.imports,
+	documents : payload.documents default [], 
+	properties : payload.properties mapObject (value, key) -> {
+		(key replace '__' with '.') : value
+	} unless payload.properties == null otherwise {}
+} unless payload == null otherwise null]]></dw:set-payload>
+		</dw:transform-message>
+		<logger message="Configuration found #[payload]" level="INFO" doc:name="Log Retrieve Config" />
+	</sub-flow>
+	<sub-flow name="retrieve-all-configuration">
+		<logger message="Retrieving all configuration" level="INFO" doc:name="Log Retrieve All Configuration" />
+		<mongo:find-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" returnId="false" doc:name="Mongo DB" />
+		<dw:transform-message doc:name="Prepare Response">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload default [] map (config) -> {
+	application : config.application,
+	version : config.version,
+	environment : config.environment,
+	imports : config.imports,
+	properties : config.properties mapObject (value, key) -> {
+		(key replace '__' with '.') : value
+	} unless config.properties == null otherwise {
+	},
+	documents: config.documents
+} unless payload == null otherwise []
+]]></dw:set-payload>
+		</dw:transform-message>
+	</sub-flow>
+    <sub-flow name="update-configuration-subflow">
+        <json:json-to-object-transformer returnClass="java.util.HashMap" mimeType="application/java" doc:name="JSON to Object"/>
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findConfigBy-appVersionAndEnv-subflow"/>
+        <logger message="Existing configuration ObjectId #[flowVars.objectId]" level="INFO" doc:name="Log Existing Configuration ObjectID"/>
+        <dw:transform-message doc:name="To Update Payload">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	application : flowVars.existingConfiguration.application,
+	version : flowVars.existingConfiguration.version,
+	environment : flowVars.existingConfiguration.environment,
+	imports : payload.imports default [],
+	properties : payload.properties mapObject (value, key) -> {
+		(key replace "." with "__") : value
+	} unless payload.properties == null otherwise {
+	}
+}]]></dw:set-payload>
+            <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	application: flowVars.application,
+	version : flowVars.configVersion,
+	environment: flowVars.env
+}]]></dw:set-variable>
+        </dw:transform-message>
+        <logger message="Query to Update configuration #[flowVars.updateQuery]" level="INFO" doc:name="Log Update Query"/>
+        <mongo:find-one-and-update-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" query-ref="#[flowVars.updateQuery]" doc:name="Update Configuration"/>
+        <logger message="Update config Result #[payload]" level="INFO" doc:name="Log Update Config Result"/>
+    </sub-flow>
+    <sub-flow name="promote-toEnv-subflow">
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
+        <message-properties-transformer scope="invocation" mimeType="application/java" doc:name="Set Env Variables">
+            <add-message-property key="existingEnv" value="#[flowVars.env]"/>
+            <add-message-property key="env" value="#[flowVars.toEnv]"/>
+            <add-message-property key="existingObjectId" value="#[flowVars.objectId]"/>
+        </message-properties-transformer>
+        <logger message="Finding existing toPromoteVersion configuration, #[flowVars.toEnv]" level="INFO" doc:name="Finding toPromote Configuration"/>
+        <flow-ref name="findConfigBy-appVersionAndEnv-subflow" doc:name="findConfigBy-appVersionAndEnv-subflow"/>
+        <validation:all doc:name="Validate toPromoteEnv Configuration">
+            <validation:validations>
+                <validation:is-null value="#[payload]" message="Promote configuration already exist for application: #[flowVars.application], version: #[flowVars.configVersion], env: #[flowVars.env];400"/>
+            </validation:validations>
+        </validation:all>
+        <dw:transform-message doc:name="Promote Configuration">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"application": flowVars.existingConfiguration.application,
+	"version": flowVars.existingConfiguration.version,
+	"environment": flowVars.toEnv,
+	"imports": flowVars.existingConfiguration.imports,
+	"properties": flowVars.existingConfiguration.properties mapObject (value, key) -> {
+		(key replace "." with "__") : value
+	} unless flowVars.existingConfiguration.properties == null otherwise {
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="Promoting Env to #[flowVars.toEnv]" level="INFO" doc:name="Log toPromote Env"/>
+        <mongo:insert-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" doc:name="Promote Configuration"/>
+        <set-variable variableName="toPromoteObjectId" value="#[payload]" mimeType="application/java" doc:name="Set toPromote ObjectId"/>
+        <logger message="Configuration Promoted #[flowVars.toPromoteObjectId]" level="INFO" doc:name="Log Promoted Document"/>
+        <flow-ref name="promote-documents-toEnv-subflow" doc:name="promote-documents-toEnv-subflow"/>
+    </sub-flow>
+    <sub-flow name="promote-documents-toEnv-subflow">
+        <set-variable variableName="objectId" value="#[flowVars.existingObjectId]" mimeType="application/java" doc:name="Set ExistingObject Id"/>
+        <logger message="Existing ObjectId #[flowVars.objectId], toPromote ObjectId #[flowVars.toPromoteObjectId]" level="INFO" doc:name="Log toPromote ObjectId"/>
+        <flow-ref name="findDocuments-byObjectId-subflow" doc:name="findDocuments-byObjectId-subflow"/>
+        <dw:transform-message doc:name="toPromote Payload">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+(payload default [] map (document) -> {
+	configId : flowVars.toPromoteObjectId,
+	key : document.key,
+	type : document.type,
+	value : document.value
+} as :object {class : 'org.bson.Document'}) unless payload == null otherwise []]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="toPromote Documents #[payload]" level="INFO" doc:name="To Promote Documents"/>
+        <mongo:insert-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" doc:name="Insert documents"/>
+    </sub-flow>
+    <sub-flow name="copy-toVersion-subflow">
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
+        <message-properties-transformer scope="invocation" mimeType="application/java" doc:name="Set Version Variables">
+            <add-message-property key="configVersion" value="#[flowVars.toVersion]"/>
+            <add-message-property key="existingObjectId" value="#[flowVars.objectId]"/>
+        </message-properties-transformer>
+        <logger message="Existing Payload to copy #[payload]" level="INFO" doc:name="Log Copy to Version"/>
+        <flow-ref name="findConfigBy-appVersionAndEnv-subflow" doc:name="findConfigBy-appVersionAndEnv-subflow"/>
+        <validation:all doc:name="Validate Copy Configuration">
+            <validation:validations>
+                <validation:is-null value="#[payload]" message="Configuration already exist for application: #[flowVars.application], version: #[flowVars.configVersion], env: #[flowVars.env];400"/>
+            </validation:validations>
+        </validation:all>
+        <dw:transform-message doc:name="ToCopy Payload">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"application": flowVars.existingConfiguration.application,
+	"version": flowVars.toVersion,
+	"environment": flowVars.existingConfiguration.environment,
+	"imports": flowVars.existingConfiguration.imports,
+	"properties": flowVars.existingConfiguration.properties mapObject (value, key) -> {
+		(key replace "." with "__") : value
+	} unless flowVars.existingConfiguration.properties == null otherwise {
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <mongo:insert-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" doc:name="Copy Configuration"/>
+        <set-variable variableName="toVersionObjectId" value="#[payload]" mimeType="application/java" doc:name="To Version ObjectId"/>
+        <flow-ref name="copy-documents-to-toVersion" doc:name="copy-documents-to-toVersion"/>
+    </sub-flow>
+    <sub-flow name="copy-documents-to-toVersion">
+        <logger message="Copied Configuration objectId #[flowVars.toVersionObjectId], existingObjectId #[flowVars.existingObjectId]" level="INFO" doc:name="Log Copy Response"/>
+        <set-variable variableName="objectId" value="#[flowVars.existingObjectId]" mimeType="application/java" doc:name="Set ObjectId"/>
+        <flow-ref name="findDocuments-byObjectId-subflow" doc:name="findDocuments-byObjectId-subflow"/>
+        <dw:transform-message doc:name="Copy Documents">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+(payload default [] map (document) -> {
+	configId : flowVars.toVersionObjectId,
+	key : document.key,
+	type : document.type,
+	value : document.value
+} as :object {class : 'org.bson.Document'}) unless payload == null otherwise []]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="toCopy Documents #[payload]" level="INFO" doc:name="Log To Copy Document"/>
+        <mongo:insert-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" doc:name="Insert documents"/>
+    </sub-flow>
+    <sub-flow name="patch-existing-configuration">
+        <json:json-to-object-transformer returnClass="java.util.HashMap" mimeType="application/java" doc:name="JSON to Object"/>
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
+        <logger message="Existing Configuration #[flowVars.existingConfiguration]" level="INFO" doc:name="Log Existing Configuration"/>
+        <dw:transform-message doc:name="Patch properties">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+
+%var toAddProps = (payload.properties pluck $$ default []) -- (flowVars.existingConfiguration.properties pluck $$ default [])
+---
+
+{
+	properties : (flowVars.existingConfiguration.properties mapObject (value, key) -> {
+	(key replace "." with "__") : payload.properties[key] when payload.properties[key]? otherwise value}
+	unless flowVars.existingConfiguration.properties == null otherwise {}) 
+
+++ {(toAddProps default [] map (prop) -> {
+	(prop replace "." with "__") : payload.properties[prop]})}
+	
+}]]></dw:set-payload>
+            <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	application: flowVars.application,
+	version : flowVars.configVersion,
+	environment: flowVars.env
+}]]></dw:set-variable>
+        </dw:transform-message>
+        <logger message="Update Query #[flowVars.updateQuery],  Patch Payload #[payload]" level="INFO" doc:name="Log Patch Payload"/>
+        <mongo:find-one-and-update-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" query-ref="#[flowVars.updateQuery]" upsert="true" doc:name="Mongo DB"/>
+    </sub-flow>
+    <sub-flow name="add-update-document-subflow">
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
+        <logger message="ObjectId for storing document #[flowVars.objectId]" level="INFO" doc:name="Log ObjectId for Document"/>
+        <dw:transform-message doc:name="Upsert Document">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	value : payload 
+}]]></dw:set-payload>
+            <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	configId: flowVars.objectId,
+	key : flowVars.key,
+	type : inboundProperties['content-type']
+} as :object {class : 'org.bson.Document'}
+	
+]]></dw:set-variable>
+        </dw:transform-message>
+        <mongo:find-one-and-update-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" query-ref="#[flowVars.updateQuery]" upsert="true" doc:name="Upsert Document"/>
+    </sub-flow>
+    <sub-flow name="find-document-subflow">
+        <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
+        <logger message="Existing config objectID #[flowVars.objectId]" level="INFO" doc:name="Logger"/>
+        <flow-ref name="findDocument-byObjectId-And-Key-subflow" doc:name="findDocument-byObjectId-And-Key-subflow"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	configId : flowVars.objectId,
+	key : flowVars.key
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <mongo:find-one-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" returnId="false" doc:name="Get Document"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload.value.data]]></dw:set-payload>
+            <dw:set-property propertyName="content-type"><![CDATA[%dw 1.0
+%output application/java
+---
+payload.type]]></dw:set-property>
+        </dw:transform-message>
+    </sub-flow>
+    <sub-flow name="findAnd-Validate-configuration-Subflow">
+        <enricher doc:name="Message Enricher">
+            <flow-ref name="findConfigBy-appVersionAndEnv-subflow" doc:name="findConfigBy-appVersionAndEnv-subflow"/>
+            <enrich source="#[payload]" target="#[flowVars['existingConfiguration']]"/>
+            <enrich source="#[flowVars.objectId]" target="#[flowVars['objectId']]"/>
+        </enricher>
+        <validation:all doc:name="Validate Exist Configuration">
+            <validation:validations>
+                <validation:is-not-null value="#[flowVars.existingConfiguration]" message="No configuration found for application: #[flowVars.application], version: #[flowVars.configVersion], env: #[flowVars.env];404"/>
+            </validation:validations>
+        </validation:all>
+        <logger message="Object Id for application #[flowVars.application] , env #[flowVars.env], version #[flowVars.configVersion] = #[flowVars.objectId]" level="INFO" doc:name="Log ObjectId "/>
+    </sub-flow>
+    <sub-flow name="findDocuments-byObjectId-subflow">
+        <set-variable variableName="findByConfigId" value="#[new org.bson.Document('configId', flowVars.objectId)]" mimeType="application/java" doc:name="Prepare Document Query"/>
+        <logger message="Finding documents for id #[flowVars.objectId], Query #[flowVars.findByConfigId]" level="INFO" doc:name="Log find Document Query"/>
+        <mongo:find-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" query-ref="#[flowVars.findByConfigId]" returnId="false" doc:name="Find Document"/>
+    </sub-flow>
+    <sub-flow name="findDocument-byObjectId-And-Key-subflow">
+        <set-variable variableName="findByConfigIdAndKey" value="#[new org.bson.Document('configId', flowVars.objectId).append('key', flowVars.key)]" mimeType="application/java" doc:name="FindBy ObjectId And Key"/>
+        <mongo:find-one-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" query-ref="#[flowVars.findByConfigIdAndKey]" returnId="false" doc:name="FindBy ObjectId And key" failOnNotFound="false"/>
+        <logger message="Exisitng Document #[payload]" level="INFO" doc:name="Log Existing Document"/>
+        <validation:all doc:name="Validate Existing document">
+            <validation:validations>
+                <validation:is-not-null value="#[payload]" message="No documents found for app:  #[flowVars.application], key : #[flowVars.key];404"/>
+            </validation:validations>
+        </validation:all>
+    </sub-flow>
+</mule>

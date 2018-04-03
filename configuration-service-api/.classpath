@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/*.java" kind="src" path="src/main/api"/>
+	<classpathentry excluding="**/*.java" kind="src" path="src/main/app"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry excluding="**/*.java" kind="src" path="src/main/resources"/>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry excluding="**/*.java" kind="src" output="target/test-classes" path="src/test/resources"/>
+	<classpathentry kind="con" path="MULE_RUNTIME"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="M2_REPO/com/intellij/annotations/12.0/annotations-12.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.6/commons-lang-2.6.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-lang3/3.0/commons-lang3-3.0.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/junit/junit/4.12/junit-4.12.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/org/mockito/mockito-all/1.8.2/mockito-all-1.8.2.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/3.2.0/mongo-java-driver-3.2.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/mule/tools/devkit/mule-devkit-shade/3.9.4/mule-devkit-shade-3.9.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/modules/mule-interceptor-module/3.8.6/mule-interceptor-module-3.8.6.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/org/mule/modules/mule-module-mongo/4.3.0/mule-module-mongo-4.3.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/munit/mule-munit-support/3.8.6/mule-munit-support-3.8.6.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/munit/munit-assert/1.3.7/munit-assert-1.3.7.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/munit/munit-common/1.3.7/munit-common-1.3.7.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/munit/munit-mock/1.3.7/munit-mock-1.3.7.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/com/mulesoft/munit/munit-runner/1.3.7/munit-runner-1.3.7.jar">
+		<attributes>
+			<attribute name="org.mule.tooling.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/munit"/>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

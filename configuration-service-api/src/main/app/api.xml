@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+    <http:listener-config name="api-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="api-config" raml="api.raml" consoleEnabled="false" doc:name="Router"/>
+    <flow name="api-main">
+        <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="api-console">
+        <http:listener config-ref="api-httpListenerConfig" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="api-config" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="put:/configuration/{application}/{configVersion}/{env}/dynamic/{key}:api-config">
+        <flow-ref name="add-update-document-subflow" doc:name="add-update-document-subflow"/>
+    </flow>
+    <flow name="put:/configuration/{application}/{configVersion}/{env}:api-config">
+        <flow-ref name="update-configuration-subflow" doc:name="update-configuration-subflow"/>
+    </flow>
+    <flow name="patch:/configuration/{application}/{configVersion}/{env}:api-config">
+        <flow-ref name="patch-existing-configuration" doc:name="patch-existing-configuration"/>
+    </flow>
+    <flow name="get:/configuration:api-config">
+        <flow-ref name="retrieve-all-configuration" doc:name="retrieve-configuration-subflow"/>
+    </flow>
+    <flow name="get:/configuration/{application}/{configVersion}/{env}/dynamic/{key}:api-config">
+        <flow-ref name="find-document-subflow" doc:name="find-document-subflow"/>
+    </flow>
+    <flow name="get:/configuration/{application}/{configVersion}/{env}:api-config">
+        <flow-ref name="retrieve-configuration-subflow" doc:name="retrieve-configuration-subflow"/>
+    </flow>
+    <flow name="post:/configuration:application/json:api-config">
+        <flow-ref name="post-configuration-subflow" doc:name="post-configuration-subflow"/>
+    </flow>
+    <flow name="post:/configuration/{application}/{configVersion}/{env}/copy/{toVersion}:api-config">
+        <flow-ref name="copy-toVersion-subflow" doc:name="copy-toVersion-subflow"/>
+    </flow>
+    <flow name="post:/configuration/{application}/{configVersion}/{env}/promote/{toEnv}:api-config">
+        <flow-ref name="promote-toEnv-subflow" doc:name="promote-toEnv-subflow"/>
+    </flow>
+</mule>

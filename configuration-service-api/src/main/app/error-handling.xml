@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+
+	<choice-exception-strategy name="global-exception-strategy">
+		<catch-exception-strategy when="#[exception.causedBy(java.util.concurrent.TimeoutException)]" doc:name="Caused By (java.util.concurrent.TimeoutException)">
+			<set-variable variableName="errorMessage" value="Unable to connect to upstream service. Request timed out." doc:name="Set Error Message" />
+			<flow-ref name="global-bad-gateway-response-sub-flow" doc:name="Bad Gateway Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(java.util.NoSuchElementException)]" doc:name="Caused By (java.util.NoSuchElementException)">
+			<set-variable variableName="errorMessage" value="Unable to connect to upstream service." doc:name="Set Error Message" />
+			<flow-ref name="global-bad-gateway-response-sub-flow" doc:name="Bad Gateway Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causeMatches('java.net')]" doc:name="Cause Matches ('java.net')">
+			<set-variable variableName="errorMessage" value="Unable to connect to upstream service." doc:name="Set Error Message" />
+			<flow-ref name="global-bad-gateway-response-sub-flow" doc:name="Bad Gateway Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.module.apikit.exception.NotFoundException)]" doc:name="Caused By (org.mule.module.apikit.exception.NotFoundException)">
+			<flow-ref name="global-resource-not-found-response-sub-flow" doc:name="Resource Not Found Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.module.apikit.exception.MethodNotAllowedException)]" doc:name="Caused By (org.mule.module.apikit.exception.MethodNotAllowedException)">
+			<flow-ref name="global-method-not-allowed-response-sub-flow" doc:name="Method Not Allowed Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.module.apikit.exception.UnsupportedMediaTypeException)]" doc:name="Caused By (org.mule.module.apikit.exception.UnsupportedMediaTypeException)">
+			<flow-ref name="global-unsupported-media-type-response-sub-flow" doc:name="Unsupported Media Type Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.module.apikit.exception.NotAcceptableException)]" doc:name="Caused By (org.mule.module.apikit.exception.NotAcceptableException)">
+			<flow-ref name="global-not-acceptable-response-sub-flow" doc:name="Not Acceptable Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.module.apikit.exception.BadRequestException)]" doc:name="Caused By (org.mule.module.apikit.exception.BadRequestException)">
+			<flow-ref name="global-bad-request-response-sub-flow" doc:name="Bad Request Response" />
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causedBy(org.mule.extension.validation.api.MultipleValidationException)]" doc:name="Validation Exception">
+			<set-variable variableName="validationErrors" value="#[((org.mule.util.ExceptionUtils.getRootCause(exception).getValidationResult())).getFailedValidationResults()]"
+				mimeType="application/java" doc:name="Extract Validation Errors" />
+            <dw:transform-message doc:name="Prepare Error Response">
+                <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+%function extractErrorCode (error) {
+	errorCode : (error splitBy ';') [1] as :number default 400,
+	errorMessage : (error splitBy ';')[0]
+}
+---
+{
+	errorDateTime: now as :string { format: "yyyy-MM-dd'T'HH:mm:ssZ" },
+	errors : flowVars.validationErrors default [] map (error) ->  using (errorDetails = extractErrorCode(error.message as :string)) {
+		errorCode : errorDetails.errorCode,
+		errorMessage : errorDetails.errorMessage
+	}
+}]]></dw:set-payload>
+            </dw:transform-message>
+            <set-property propertyName="http.status" value="#[payload.errors[0].errorCode]" mimeType="application/java" doc:name="Set HttpStatus"/>
+            <json:object-to-json-transformer doc:name="Object to JSON"/>
+		</catch-exception-strategy>
+		<catch-exception-strategy doc:name="Default">
+			<set-variable variableName="errorMessage" value="Unable to fullfil request due to internal error." doc:name="Set Error Message" />
+			<flow-ref name="global-internal-server-error-response-sub-flow" doc:name="Internal Server Response" />
+		</catch-exception-strategy>
+	</choice-exception-strategy>
+
+	<sub-flow name="global-bad-request-response-sub-flow">
+		<set-property propertyName="http.status" value="400" doc:name="Set Status" />
+		<set-payload value="BAD_REQUEST" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-resource-not-found-response-sub-flow">
+		<set-property propertyName="http.status" value="404" doc:name="Set Status" />
+		<set-payload value="RESOURCE_NOT_FOUND" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="global-prepare-error-response-sub-flow" />
+	</sub-flow>
+	<sub-flow name="global-method-not-allowed-response-sub-flow">
+		<set-property propertyName="http.status" value="405" doc:name="Set Status" />
+		<set-payload value="METHOD_NOT_ALLOWED" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-not-acceptable-response-sub-flow">
+		<set-property propertyName="http.status" value="406" doc:name="Set Status" />
+		<set-payload value="NOT_ACCEPTABLE" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-conflict-response-sub-flow">
+		<set-property propertyName="http.status" value="409" doc:name="Set Status" />
+		<set-payload value="CONFLICT" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-unsupported-media-type-response-sub-flow">
+		<set-property propertyName="http.status" value="415" doc:name="Set Status" />
+		<set-payload value="UNSUPPORTED_MEDIA_TYPE" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-internal-server-error-response-sub-flow">
+		<set-property propertyName="http.status" value="500" doc:name="Set Status" />
+		<set-payload value="INTERNAL_SERVER_ERROR" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+	<sub-flow name="global-bad-gateway-response-sub-flow">
+		<set-property propertyName="http.status" value="502" doc:name="Set Status" />
+		<set-payload value="BAD_GATEWAY" doc:name="Set Error Code" mimeType="application/java" />
+		<flow-ref name="global-prepare-error-response-sub-flow" doc:name="Prepare Error Response" />
+	</sub-flow>
+
+	<sub-flow name="global-prepare-error-response-sub-flow">
+		<logger
+			message="Transaction [#[flowVars.transactionId]] - Error Code [#[payload]] - Error Message [#[flowVars.errorMessage != null ? flowVars.errorMessage : '']] - Error Description [#[flowVars.errorDescription != null ? flowVars.errorDescription : '']]"
+			level="ERROR" doc:name="Logger" />
+		<set-variable variableName="errorRaised" value="#[true]" doc:name="Set Error Raised" />
+		<dw:transform-message doc:name="Create Error Message">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/json encoding="UTF-8", skipNullOn="everywhere"
+---
+{
+	error: {
+		errorCode: payload,
+		errorDateTime: now as :string { format: "yyyy-MM-dd'T'HH:mm:ssZ" },
+		errorMessage: flowVars.errorMessage,
+		errorDescription: flowVars.errorDescription
+	}
+}]]></dw:set-payload>
+		</dw:transform-message>
+		<set-property propertyName="Content-Type" value="application/json" doc:name="Set Content Type" />
+	</sub-flow>
+
+</mule>
