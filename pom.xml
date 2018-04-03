@@ -3,15 +3,16 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mule.modules.caas</groupId>
-	<artifactId>configuration-services-connector-parent</artifactId>
+	<artifactId>configuration-service</artifactId>
 	<packaging>pom</packaging>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>Configuration Service Connector Parent</name>
+	<name>Configuration Service Parent</name>
 
     <modules>
         <module>configuration-service-common</module>
         <module>mule3</module>
 		<module>mule4</module>
+		<module>configuration-service-api</module>
 		<module>configuration-service-cli</module>
     </modules>
 
