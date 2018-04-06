@@ -103,7 +103,11 @@ public class EncryptionProcessor {
             ks.load(new FileInputStream(keystoreFile), password);
 
             //load the key
-            password = CliUtils.readExistingPassword("Please enter backup decryption key password.", prompt, 4);
+            char[] kpassword = CliUtils.readExistingPassword("Please enter backup decryption key password. (leave empty for same as keystore)", prompt, 4, true);
+
+            if (kpassword != null) {
+                password = kpassword;
+            }
 
             Key key = ks.getKey("enc-key", password);
 

@@ -186,7 +186,12 @@ public class BackupTask extends AbstractAPITask {
 
         ks.setKeyEntry("enc-key", encKey, keyPassword, null);
 
-        char[] password = CliUtils.readPassword("Please type a password for the new keystore: ", logger, 4);
+        char[] password = CliUtils.readPassword("Please type a password for the new keystore: (leave empty to use the same as key)", logger, 4, true);
+
+        if (password == null) {
+            password = keyPassword;
+        }
+
         ks.store(new FileOutputStream(keyStoreFilename), password);
 
         logger.info("Saving encryption options to: {}", jsonFilename);
