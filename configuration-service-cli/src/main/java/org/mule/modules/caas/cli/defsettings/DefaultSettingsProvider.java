@@ -38,6 +38,7 @@ public class DefaultSettingsProvider implements TaskProvider {
             config.setBackupsDirectory("backups");
             config.setServiceUrl("http://localhost:8081/api/configuration");
             config.setEncryptionEnabled(false);
+            config.setDecryptionEnabled(true);
 
             Timeout to = new Timeout();
             to.setUnit(TimeUnit.HOURS);
