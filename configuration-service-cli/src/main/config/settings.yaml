@@ -7,6 +7,10 @@ serviceUrl: http://localhost:8080/api/configuration
 
 #encryption settings.
 encryptionEnabled: true
+
+#set this as false to not decrypt, this is typically useful when encrypting raw data.
+decryptionEnabled: true
+
 clientEncryptionKeyStore:
   location: enc-default.jceks
   password: changeit

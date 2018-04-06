@@ -26,6 +26,8 @@ public class CliConfig implements Serializable {
 
     private boolean encryptionEnabled;
 
+    private Boolean decryptionEnabled;
+
     private KeyStoreConfig clientEncryptionKeyStore;
 
     private KeyStoreKey wrapKey;
@@ -80,6 +82,14 @@ public class CliConfig implements Serializable {
 
     public void setEncryptionEnabled(boolean encryptionEnabled) {
         this.encryptionEnabled = encryptionEnabled;
+    }
+
+    public Boolean isDecryptionEnabled() {
+        return decryptionEnabled;
+    }
+
+    public void setDecryptionEnabled(Boolean decryptionEnabled) {
+        this.decryptionEnabled = decryptionEnabled;
     }
 
     public KeyStoreConfig getClientEncryptionKeyStore() {

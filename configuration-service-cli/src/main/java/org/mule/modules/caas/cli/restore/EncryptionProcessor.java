@@ -19,6 +19,7 @@ import java.security.*;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class EncryptionProcessor {
 
@@ -33,7 +34,25 @@ public class EncryptionProcessor {
         encCipher = null;
     }
 
+    private void testJce(Logger prompt) {
+        try {
+            int length = Cipher.getMaxAllowedKeyLength("AES");
+
+            logger.debug("Max key length allowed for 'AES' is: {}", length);
+
+            if (length <= 128) {
+                prompt.warn("JCE Unlimited Strength Policy is not installed on JDK!!!");
+            }
+
+        } catch (Exception ex) {
+            logger.warn("JCE does not seem to be installed!");
+        }
+    }
+
     public EncryptionProcessor(Map<String, String> encKeyData, File backupsDirectory, CliConfig config, Logger prompt) {
+
+        testJce(prompt);
+
         decCipher = initDecryptionCipher(backupsDirectory, config, prompt);
         encCipher = initEncryptionCipher(encKeyData, config);
     }
@@ -55,6 +74,14 @@ public class EncryptionProcessor {
     }
 
     private Cipher initDecryptionCipher(File backupsDirectory, CliConfig config, Logger prompt) {
+
+        Optional<Boolean> decryptionEnabled = Optional.of(config.isDecryptionEnabled());
+
+        if (decryptionEnabled.isPresent() && !decryptionEnabled.get()) {
+            //this means the setting is not null and is false, then we don't decrypt.
+            return null;
+        }
+
 
         //in this case, we need to read the key from the keystore, so first we load it.
         String keystoreFile = backupsDirectory + File.separator + "enc-keys.jceks";
