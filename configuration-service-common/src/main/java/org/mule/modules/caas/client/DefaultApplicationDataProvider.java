@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
@@ -41,7 +42,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
                 .path(environment);
 
         //read it as a java map
-        Map<String, Object> result = target.request().accept(MediaType.APPLICATION_JSON).get(Map.class);
+        Map<String, Object> result = applyHeaders(target.request(), config).accept(MediaType.APPLICATION_JSON).get(Map.class);
 
         //this potentially logs sensitive information
         //we need to remove the properties before logging.
@@ -65,7 +66,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
                 .path("dynamic")
                 .path(doc.getName());
 
-        InputStream ret = target.request().accept(doc.getContentType()).get(InputStream.class);
+        InputStream ret = applyHeaders(target.request(), config).accept(doc.getContentType()).get(InputStream.class);
 
         if (app.getDataWrapper() != null) {
             ret = app.getDataWrapper().wrapStream(ret);
@@ -94,7 +95,7 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
                 .path("security")
                 .path("wrappedKey");
 
-        Map<String, String> encKey = target.request().accept(MediaType.APPLICATION_JSON_TYPE).get(Map.class);
+        Map<String, String> encKey = applyHeaders(target.request(), config).accept(MediaType.APPLICATION_JSON_TYPE).get(Map.class);
 
 
         return EncryptionDataWrapper.builder()
@@ -165,6 +166,17 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
         return retBuilder.build();
     }
 
+    private Invocation.Builder applyHeaders(Invocation.Builder builder, ServiceConfiguration config) {
 
+        if (config.getCustomHeaders() == null) {
+            return builder;
+        }
+
+        for(Map.Entry<String, String> header : config.getCustomHeaders().entrySet()) {
+            builder.header(header.getKey(), header.getValue());
+        }
+
+        return builder;
+    }
 
 }

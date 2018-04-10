@@ -1,5 +1,7 @@
 package org.mule.modules.caas;
 
+import java.util.Map;
+
 /**
  * Provides an abstraction of application configuration
  */
@@ -39,4 +41,5 @@ public interface ServiceConfiguration {
 
     String getWrapKeyPassword();
 
+    Map<String, String> getCustomHeaders();
 }
