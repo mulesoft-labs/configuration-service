@@ -10,6 +10,7 @@ types:
   ConfigCoordinate: !include model/ConfigCoordinate.raml
   Document: !include model/Document.raml
   ConfigurationElement: !include model/ConfigurationElement.raml
+  WrappedKey: !include model/WrappedKey.raml
 
 traits: 
   StandardHTTPStatusReporter: !include traits/StandardHttpStatusReporter.raml
@@ -85,4 +86,15 @@ traits:
         post:
           is: [StandardHTTPStatusReporter, StateTransferOperation]
           description: Controller method to promote the configuration of the environment defined by {env} into the environment defined by /{toEnv}
-  
+
+/admin:
+  /security/wrappedKey:
+    get:
+      is: [StandardHTTPStatusReporter, ResourceAccess]
+      description: If encryption is enabled, this method provides the information of the enctyption key.
+      responses:
+        200:
+          body:
+            application/json:
+              type: WrappedKey
+              example: !include examples/WrappedKey.raml

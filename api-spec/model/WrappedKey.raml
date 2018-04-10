@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+type: object
+properties:
+  algorithm:
+    type: string
+    description: The base 64 representation of the algorithm, block mode and padding used to encrypt the data.
+  encodedKey:
+    type: string
+    description: The base 64 representation of the wrapped (encrypted) encryption key.
+  macSignature:
+    type: string
+    description: The signature that clients can use to verify the authenticity of the message from the CaaS Service.
+  parameters:
+    type: string
+    description: The encoded representation of the algorithm parameters used to encrypt the data.
