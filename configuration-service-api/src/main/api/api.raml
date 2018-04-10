@@ -86,4 +86,18 @@ traits:
         post:
           is: [StandardHTTPStatusReporter, StateTransferOperation]
           description: Controller method to promote the configuration of the environment defined by {env} into the environment defined by /{toEnv}
-  
+
+/admin/security/wrappedKey:
+  get: 
+    is: [StandardHTTPStatusReporter, ResourceAccess]
+    responses:
+      200: 
+        body:
+          application/json:
+            example: | 
+                    {
+                      "algorithm": "QUVTL0NCQy9QS0NTNVBBRERJTkc=",
+                      "encodedKey": "itLubDhp2vliQiuin3PcrqPVsYIxsSeD",
+                      "macSignature": "N9Hkply0kMYN01TGE1P2BOrqY4RohQF2KkUJz53wewE=",
+                      "parameters": "BBB2TH/sAVq8WCpBc1wGa0Mo"
+                     }          
