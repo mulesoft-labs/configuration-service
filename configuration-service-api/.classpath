@@ -17,10 +17,10 @@
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-lang3/3.0/commons-lang3-3.0.jar">
     <attributes>
-      <attribute value="test" name="org.mule.tooling.scope"/>
+      <attribute value="provided" name="org.mule.tooling.scope"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/junit/junit/4.12/junit-4.12.jar">
+  <classpathentry kind="var" path="M2_REPO/junit/junit/4.12/junit-4.12.jar" sourcepath="M2_REPO/junit/junit/4.12/junit-4.12-sources.jar">
     <attributes>
       <attribute value="test" name="org.mule.tooling.scope"/>
     </attributes>

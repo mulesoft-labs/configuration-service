@@ -17,8 +17,7 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
 			<spring:property name="wrapKeyAlias" value="${wrapkey.alias}"></spring:property>
 			<spring:property name="signatureKeyAlias" value="${signaturekey.alias}"></spring:property>
 			<spring:property name="wrapKeyPassword" value="${wrapkey.password}"></spring:property>
-			<spring:property name="signatureKeypassword" value="${signaturekey.password}"></spring:property>
-			
+			<spring:property name="signatureKeyPassword" value="${signaturekey.password}"></spring:property>
 		</spring:bean>
 
 	</spring:beans>

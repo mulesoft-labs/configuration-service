@@ -12,20 +12,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
 	<sub-flow name="post-configuration-subflow">
 		<dw:transform-message doc:name="Configuration">
-			<dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-
-	application : payload.application,
-	version : payload.version,
-	environment : payload.environment,
-	imports : payload.imports default [],
-	documents: payload.documents default [],
-	properties : payload.properties mapObject (value, key) -> {
-		(key replace "." with "__") : value
-	} unless payload.properties == null otherwise {}
- }]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/create-new-config.dwl"/>
 		</dw:transform-message>
 		<message-properties-transformer scope="invocation" mimeType="application/java" doc:name="Extract Configuration Keys">
 			<add-message-property key="configVersion" value="#[payload.version]" />
@@ -62,46 +49,18 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
             <flow-ref name="findDocuments-byObjectId-subflow" doc:name="findDocuments-byObjectId-subflow"/>
         </enricher>
         <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/json
----
-payload ++ {documents : flowVars.documents map (doc) -> {
-	key : doc.key,
-	type : doc.type
-}}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:output/enrich-config-documents.dwl"/>
         </dw:transform-message>
 	</sub-flow>
 	<sub-flow name="findConfigBy-appVersionAndEnv-subflow">
 		<dw:transform-message doc:name="Prapare Retrieve Query">
-			<dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	application: flowVars.application,
-	version : flowVars.configVersion,
-	environment: flowVars.env
-
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/retrieve-query.dwl"/>
 		</dw:transform-message>
 		<logger message="Find Configuration Query #[payload]" level="INFO" doc:name="Log Retrieve Query" />
 		<mongo:find-one-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" failOnNotFound="false" doc:name="Find One Document" />
 		<set-variable variableName="objectId" value="#[payload == null ? '' : (payload['_id']).toString()]" mimeType="application/java" doc:name="Set ObjectId" />
 		<dw:transform-message doc:name="Transform Message">
-			<dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-
-{
-
-	application : payload.application,
-	version : payload.version,
-	environment : payload.environment,
-	imports : payload.imports,
-	documents : payload.documents default [], 
-	properties : payload.properties mapObject (value, key) -> {
-		(key replace '__' with '.') : value
-	} unless payload.properties == null otherwise {}
-} unless payload == null otherwise null]]></dw:set-payload>
+            <dw:set-payload resource="classpath:output/retrieve-configuration-element.dwl"/>
 		</dw:transform-message>
 		<logger message="Configuration found #[payload]" level="INFO" doc:name="Log Retrieve Config" />
 	</sub-flow>
@@ -109,21 +68,7 @@ payload ++ {documents : flowVars.documents map (doc) -> {
 		<logger message="Retrieving all configuration" level="INFO" doc:name="Log Retrieve All Configuration" />
 		<mongo:find-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" returnId="false" doc:name="Mongo DB" />
 		<dw:transform-message doc:name="Prepare Response">
-			<dw:set-payload><![CDATA[%dw 1.0
-%output application/json
----
-payload default [] map (config) -> {
-	application : config.application,
-	version : config.version,
-	environment : config.environment,
-	imports : config.imports,
-	properties : config.properties mapObject (value, key) -> {
-		(key replace '__' with '.') : value
-	} unless config.properties == null otherwise {
-	},
-	documents: config.documents
-} unless payload == null otherwise []
-]]></dw:set-payload>
+            <dw:set-payload resource="classpath:output/transform-configs-list.dwl"/>
 		</dw:transform-message>
 	</sub-flow>
     <sub-flow name="update-configuration-subflow">
@@ -131,19 +76,7 @@ payload default [] map (config) -> {
         <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findConfigBy-appVersionAndEnv-subflow"/>
         <logger message="Existing configuration ObjectId #[flowVars.objectId]" level="INFO" doc:name="Log Existing Configuration ObjectID"/>
         <dw:transform-message doc:name="To Update Payload">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	application : flowVars.existingConfiguration.application,
-	version : flowVars.existingConfiguration.version,
-	environment : flowVars.existingConfiguration.environment,
-	imports : payload.imports default [],
-	properties : payload.properties mapObject (value, key) -> {
-		(key replace "." with "__") : value
-	} unless payload.properties == null otherwise {
-	}
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/transform-update-configuration.dwl"/>
             <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
 %output application/java
 ---
@@ -172,19 +105,7 @@ payload default [] map (config) -> {
             </validation:validations>
         </validation:all>
         <dw:transform-message doc:name="Promote Configuration">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	"application": flowVars.existingConfiguration.application,
-	"version": flowVars.existingConfiguration.version,
-	"environment": flowVars.toEnv,
-	"imports": flowVars.existingConfiguration.imports,
-	"properties": flowVars.existingConfiguration.properties mapObject (value, key) -> {
-		(key replace "." with "__") : value
-	} unless flowVars.existingConfiguration.properties == null otherwise {
-	}
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/read-promote-configuration.dwl"/>
         </dw:transform-message>
         <logger message="Promoting Env to #[flowVars.toEnv]" level="INFO" doc:name="Log toPromote Env"/>
         <mongo:insert-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" doc:name="Promote Configuration"/>
@@ -224,19 +145,7 @@ payload default [] map (config) -> {
             </validation:validations>
         </validation:all>
         <dw:transform-message doc:name="ToCopy Payload">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	"application": flowVars.existingConfiguration.application,
-	"version": flowVars.toVersion,
-	"environment": flowVars.existingConfiguration.environment,
-	"imports": flowVars.existingConfiguration.imports,
-	"properties": flowVars.existingConfiguration.properties mapObject (value, key) -> {
-		(key replace "." with "__") : value
-	} unless flowVars.existingConfiguration.properties == null otherwise {
-	}
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/read-copy-configuration.dwl"/>
         </dw:transform-message>
         <mongo:insert-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" doc:name="Copy Configuration"/>
         <set-variable variableName="toVersionObjectId" value="#[payload]" mimeType="application/java" doc:name="To Version ObjectId"/>
@@ -247,15 +156,7 @@ payload default [] map (config) -> {
         <set-variable variableName="objectId" value="#[flowVars.existingObjectId]" mimeType="application/java" doc:name="Set ObjectId"/>
         <flow-ref name="findDocuments-byObjectId-subflow" doc:name="findDocuments-byObjectId-subflow"/>
         <dw:transform-message doc:name="Copy Documents">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-(payload default [] map (document) -> {
-	configId : flowVars.toVersionObjectId,
-	key : document.key,
-	type : document.type,
-	value : document.value
-} as :object {class : 'org.bson.Document'}) unless payload == null otherwise []]]></dw:set-payload>
+            <dw:set-payload resource="classpath:process/copy-documents.dwl"/>
         </dw:transform-message>
         <logger message="toCopy Documents #[payload]" level="INFO" doc:name="Log To Copy Document"/>
         <mongo:insert-documents config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" doc:name="Insert documents"/>
@@ -265,21 +166,7 @@ payload default [] map (config) -> {
         <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
         <logger message="Existing Configuration #[flowVars.existingConfiguration]" level="INFO" doc:name="Log Existing Configuration"/>
         <dw:transform-message doc:name="Patch properties">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
-
-%var toAddProps = (payload.properties pluck $$ default []) -- (flowVars.existingConfiguration.properties pluck $$ default [])
----
-
-{
-	properties : (flowVars.existingConfiguration.properties mapObject (value, key) -> {
-	(key replace "." with "__") : payload.properties[key] when payload.properties[key]? otherwise value}
-	unless flowVars.existingConfiguration.properties == null otherwise {}) 
-
-++ {(toAddProps default [] map (prop) -> {
-	(prop replace "." with "__") : payload.properties[prop]})}
-	
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/patch-properties.dwl"/>
             <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
 %output application/java
 ---
@@ -296,12 +183,7 @@ payload default [] map (config) -> {
         <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
         <logger message="ObjectId for storing document #[flowVars.objectId]" level="INFO" doc:name="Log ObjectId for Document"/>
         <dw:transform-message doc:name="Upsert Document">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	value : payload 
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/upsert-document.dwl"/>
             <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
 %output application/java
 ---
@@ -320,21 +202,12 @@ payload default [] map (config) -> {
         <logger message="Existing config objectID #[flowVars.objectId]" level="INFO" doc:name="Logger"/>
         <flow-ref name="findDocument-byObjectId-And-Key-subflow" doc:name="findDocument-byObjectId-And-Key-subflow"/>
         <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	configId : flowVars.objectId,
-	key : flowVars.key
-}]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/read-document.dwl"/>
         </dw:transform-message>
         <mongo:find-one-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" returnId="false" doc:name="Get Document"/>
         <logger message="#[payload]" level="INFO" doc:name="Logger"/>
         <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-payload.value.data]]></dw:set-payload>
+            <dw:set-payload resource="classpath:input/read-document-data.dwl"/>
             <dw:set-property propertyName="content-type"><![CDATA[%dw 1.0
 %output application/java
 ---

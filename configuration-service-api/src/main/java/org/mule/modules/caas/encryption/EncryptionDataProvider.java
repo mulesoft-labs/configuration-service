@@ -4,7 +4,10 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
-import java.util.HashMap;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.crypto.Cipher;
@@ -12,12 +15,16 @@ import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.mule.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EncryptionDataProvider {
-	Logger LOGGER = LoggerFactory.getLogger(EncryptionDataProvider.class);
+	
+	Logger logger = LoggerFactory.getLogger(EncryptionDataProvider.class);
+	
+	
 	private String keystoreLocation;
 	private String keystorePassword;
 	private String encryptionKeyAlias;
@@ -27,18 +34,53 @@ public class EncryptionDataProvider {
 	private String wrapKeyAlias;
 	private String signatureKeyAlias;
 	private String wrapKeyPassword;
-	private String signatureKeypassword;
+	private String signatureKeyPassword;
 	private String initVector;
 
 	public Map<String, String> getEncryptionDetail() throws Exception {
-
-		Map<String, String> encryptiondetails = new HashMap<String, String>();
+		
+		logger.debug("Call getEncrtyptionDetail");
+		
+		//perform all the initial setup
+		if (!StringUtils.isEmpty(keystorePassword)) {
+			
+			//keystore could not have password.
+			//we can try and assume the keystore password as key passwords
+			
+			if (StringUtils.isEmpty(encryptionKeyPassword)) {
+				logger.info("Encryption key password not provided, using same as keystore");
+				this.encryptionKeyPassword = keystorePassword;
+			}
+			
+			if (StringUtils.isEmpty(wrapKeyPassword)) {
+				logger.info("Wrapping key password not provided, using same as keystore");
+				this.wrapKeyPassword = keystorePassword;
+			}
+			
+			if (StringUtils.isEmpty(signatureKeyPassword)) {
+				logger.info("Mac key password not provided, using same as keystore");
+				this.signatureKeyPassword = keystorePassword;
+			}
+			
+		}
+		
+		Map<String, String> encryptiondetails = new LinkedHashMap<String, String>();
 		InputStream keyStore = IOUtils.getResourceAsStream(this.keystoreLocation, getClass());
+		
+		if (keyStore == null) {
+			logger.error("Could not load file or resource {}", keystoreLocation);
+			throw new RuntimeException("Keystore not found!");
+		}
+		
+		
 		KeyStore ks = KeyStore.getInstance("JCEKS");
+				
 		ks.load(keyStore, keystorePassword.toCharArray());
-		Key encryptioKey = ks.getKey(encryptionKeyAlias, encryptionKeyPassword.toCharArray());
-		Key signatureKey = ks.getKey(signatureKeyAlias, signatureKeypassword.toCharArray());
-		Key wrappingKey = ks.getKey(wrapKeyAlias, wrapKeyPassword.toCharArray());
+		
+		
+		Key encryptioKey = loadKeyOrThrow(ks, "enc-key", encryptionKeyAlias, encryptionKeyPassword);
+		Key signatureKey = loadKeyOrThrow(ks, "mac-key", signatureKeyAlias, signatureKeyPassword);
+		Key wrappingKey = loadKeyOrThrow(ks, "wrap-key", wrapKeyAlias, wrapKeyPassword);
 
 		String algorithm = Base64
 				.encodeBase64String((encryptioKey.getAlgorithm() + "/" + blockMode + "/" + padding).getBytes());
@@ -47,6 +89,7 @@ public class EncryptionDataProvider {
 		byte[] encodedKey = cipher.wrap(encryptioKey);
 		Mac mac = Mac.getInstance(signatureKey.getAlgorithm());
 		mac.init(signatureKey);
+		
 		String signature = Base64.encodeBase64String(mac.doFinal(encodedKey));
 		encryptiondetails.put("algorithm", algorithm);
 		encryptiondetails.put("encodedKey", Base64.encodeBase64String(encodedKey));
@@ -55,6 +98,25 @@ public class EncryptionDataProvider {
 
 		return encryptiondetails;
 	}
+	
+	private Key loadKeyOrThrow(KeyStore ks, String defaultAlias, String alias, String password) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+		
+		char[] pwc = password.toCharArray();
+		
+		Key ret = ks.getKey(alias, pwc);
+		
+		if (ret == null) {
+			//try the default alias
+			ret = ks.getKey(defaultAlias, pwc);
+		}
+		
+		if (ret == null) {
+			throw new RuntimeException("Could not locate key: " + defaultAlias + " in keystore");
+		}
+		
+		return ret;
+	}
+	
 
 	private String getParameter(Key encryptioKey) throws Exception {
 		String param = ((encryptioKey.getAlgorithm() + "/" + blockMode + "/" + padding));
@@ -67,10 +129,17 @@ public class EncryptionDataProvider {
 	private IvParameterSpec buildInitVector(Cipher cipher, Key key) throws GeneralSecurityException {
 		byte[] iv = new byte[cipher.getBlockSize()];
 
-		byte[] keyBytes = key.getEncoded();
+		byte[] keyBytes = null;
+
+		if (initVector != null) {
+			keyBytes = initVector.getBytes();
+		} else {
+			keyBytes = key.getEncoded();
+		}
+
 		// copy the bytes of the key
 		for (int i = 0; i < iv.length; i++) {
-			iv[i] = i < keyBytes.length ? keyBytes[i] : 0;
+			iv[i] = i < keyBytes.length ? keyBytes[i] : (byte) i;
 		}
 
 		return new IvParameterSpec(iv);
@@ -150,12 +219,12 @@ public class EncryptionDataProvider {
 		this.wrapKeyPassword = wrapKeyPassword;
 	}
 
-	public String getSignatureKeypassword() {
-		return signatureKeypassword;
+	public String getSignatureKeyPassword() {
+		return signatureKeyPassword;
 	}
 
-	public void setSignatureKeypassword(String signatureKeypassword) {
-		this.signatureKeypassword = signatureKeypassword;
+	public void setSignatureKeyPassword(String signatureKeypassword) {
+		this.signatureKeyPassword = signatureKeypassword;
 	}
 
 	public String getInitVector() {
