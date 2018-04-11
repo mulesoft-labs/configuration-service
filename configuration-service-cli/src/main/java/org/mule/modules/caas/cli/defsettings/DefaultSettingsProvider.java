@@ -15,6 +15,8 @@ import org.yaml.snakeyaml.representer.Representer;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultSettingsProvider implements TaskProvider {
@@ -81,6 +83,10 @@ public class DefaultSettingsProvider implements TaskProvider {
             fakeKey.setPassword("keyPW");
 
             config.setWrapKey(fakeKey);
+
+            HashMap<String, String> headers = new HashMap<>();
+            headers.put("client_id", "someclientid");
+            config.setCustomHeaders(headers);
 
             try {
                 Representer representer = new Representer();

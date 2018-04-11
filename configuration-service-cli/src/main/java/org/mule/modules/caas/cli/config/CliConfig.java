@@ -1,6 +1,7 @@
 package org.mule.modules.caas.cli.config;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Pojo representing the configuration of this CLI tool.
@@ -15,6 +16,8 @@ public class CliConfig implements Serializable {
     }
 
     private String serviceUrl;
+
+    private Map<String, String> customHeaders;
 
     private String backupsDirectory;
 
@@ -122,5 +125,17 @@ public class CliConfig implements Serializable {
 
     public void setJobTimeout(Timeout jobTimeout) {
         this.jobTimeout = jobTimeout;
+    }
+
+    public Map<String, String> getCustomHeaders() {
+        return customHeaders;
+    }
+
+    public void setCustomHeaders(Map<String, String> customHeaders) {
+        this.customHeaders = customHeaders;
+    }
+
+    public Boolean getDecryptionEnabled() {
+        return decryptionEnabled;
     }
 }

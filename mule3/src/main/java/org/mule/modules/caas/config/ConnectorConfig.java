@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,13 @@ public class ConnectorConfig implements ServiceConfiguration{
     @FriendlyName("Configuration Service URL")
 	@Placement(group = "Basic", order = 1)
 	private String serviceUrl;
-	
+
+	@Configurable
+	@Optional
+	@FriendlyName("Custom HTTP Headers")
+	@Placement(group = "Basic", order = 6)
+	private Map<String, String> customHeaders;
+
 	/**
 	 * The name of the application whose properties will be read. If not specified, mule app name will be
 	 * used.
@@ -332,7 +339,16 @@ public class ConnectorConfig implements ServiceConfiguration{
 				'}';
 	}
 
-    ///UTILITY METHODS TO ALLOW USAGE OF PLACEHOLDERS WITHIN THE PLACEHOLDERS
+	@Override
+	public Map<String, String> getCustomHeaders() {
+		return customHeaders;
+	}
+
+	public void setCustomHeaders(Map<String, String> customHeaders) {
+		this.customHeaders = customHeaders;
+	}
+
+///UTILITY METHODS TO ALLOW USAGE OF PLACEHOLDERS WITHIN THE PLACEHOLDERS
 
 
     public String readEnvironmentalProperties(String text)

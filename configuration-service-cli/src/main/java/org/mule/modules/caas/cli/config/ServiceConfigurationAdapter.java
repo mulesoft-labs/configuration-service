@@ -2,6 +2,8 @@ package org.mule.modules.caas.cli.config;
 
 import org.mule.modules.caas.ServiceConfiguration;
 
+import java.util.Map;
+
 /**
  * Utility class so we can use the libraries present in the main connector that takes service configuration.
  * as a parameter.
@@ -149,5 +151,10 @@ public class ServiceConfigurationAdapter implements ServiceConfiguration {
         }
 
         return new String(delegate.getWrapKey().getPassword());
+    }
+
+    @Override
+    public Map<String, String> getCustomHeaders() {
+        return delegate.getCustomHeaders();
     }
 }

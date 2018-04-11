@@ -12,8 +12,11 @@ import org.mule.runtime.config.api.dsl.model.ConfigurationParameters;
 import org.mule.runtime.config.api.dsl.model.ResourceProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProviderFactory;
+import org.mulesoft.common.ext.Diff;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 
 public class ConfigurationServicePropertiesProviderFactory implements ConfigurationPropertiesProviderFactory {
@@ -37,7 +40,6 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
     public static final String CLIENTDECWRAP_PARAM = "wrapKeyAlias";
     public static final String CLIENTDECWRAPPW_PARAM = "wrapKeyPassword";
 
-
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationServicePropertiesProviderFactory.class);
 
     public static final ComponentIdentifier CONFIG_IDENTIFIER =
@@ -46,6 +48,17 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
                     .name("config")
                     .build();
 
+    public static final ComponentIdentifier HEADERS_IDENTIFIER =
+            ComponentIdentifier.builder()
+                    .namespace("configuration-service")
+                    .name("custom-headers")
+                    .build();
+
+    public static final ComponentIdentifier HEADER_IDENTIFIER =
+            ComponentIdentifier.builder()
+                    .namespace("configuration-service")
+                    .name("custom-header")
+                    .build();
 
     @Override
     public ComponentIdentifier getSupportedComponentIdentifier() {
@@ -78,6 +91,24 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             String wrapKeyPassword = getOptionalStringParemeter(parameters, CLIENTDECWRAPPW_PARAM);
 
 
+            Map<String, String> headers = new LinkedHashMap<>();
+
+            List<ConfigurationParameters> headerConfigs = parameters.getComplexConfigurationParameter(HEADERS_IDENTIFIER);
+
+            //this could be just one
+            Optional<ConfigurationParameters> headersParam = headerConfigs.stream().findAny();
+
+            if (headersParam.isPresent()) {
+                List<ConfigurationParameters> headersParams = headersParam.get().getComplexConfigurationParameter(HEADER_IDENTIFIER);
+                headersParams.forEach(hp -> {
+                    String key = getOptionalStringParemeter(hp, "key");
+                    String value = getOptionalStringParemeter(hp, "value");
+                    logger.debug("Header Name: {},  value: {}", key, value);
+                    headers.put(key, value);
+                });
+            }
+
+
             Preconditions.checkArgument(url != null, "Service URL must not be null");
             Preconditions.checkArgument(app != null, "Application Name must not be null");
             Preconditions.checkArgument(ver != null, "Version must not be null");
@@ -104,6 +135,8 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
             config.setMacKeyAlias(macKeyAlias);
             config.setMacKeyPassword(macKeyPassword);
 
+            config.setCustomHeaders(headers);
+
             ApplicationDataProvider provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
 
             ApplicationConfiguration appConfig = provider.loadApplicationConfiguration(app, ver, env);
@@ -113,6 +146,7 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
 
             return new CaasConfigurationPropertiesProvider(url, appConfig);
         } catch (ConfigurationServiceException ex) {
+            logger.error("Error while loading configuration!", ex);
             throw new RuntimeException("Error while loading configuration", ex);
         }
     }
@@ -121,6 +155,7 @@ public class ConfigurationServicePropertiesProviderFactory implements Configurat
         try {
             return params.getStringParameter(key);
         } catch (NullPointerException ex) {
+            logger.debug("Parameter {} is not present as part of configuration Parameters: ", key, params);
             //GRRRR
             return null;
         }

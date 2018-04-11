@@ -168,6 +168,8 @@ public class DefaultApplicationDataProvider implements ApplicationDataProvider {
 
     private Invocation.Builder applyHeaders(Invocation.Builder builder, ServiceConfiguration config) {
 
+        logger.debug("Called apply headers, configured headers are: {}", config.getCustomHeaders());
+
         if (config.getCustomHeaders() == null) {
             return builder;
         }

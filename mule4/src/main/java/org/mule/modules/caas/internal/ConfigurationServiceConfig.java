@@ -8,8 +8,9 @@ import org.mule.runtime.extension.api.annotation.param.Parameter;
 import org.mule.runtime.extension.api.annotation.param.display.Password;
 import org.mule.runtime.extension.api.annotation.param.display.Placement;
 
+import java.util.Map;
+
 @Configuration
-@Operations(ReadDocumentOperation.class)
 public class ConfigurationServiceConfig implements ServiceConfiguration {
 
     @Parameter
@@ -97,6 +98,9 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
     @Optional @Password @Placement(tab = "Encryption", order = 7)
     private String wrapKeyPassword;
 
+    @Parameter
+    @Optional @Placement(order = 6)
+    private Map<String, String> customHeaders;
 
     public String getServiceUrl() {
         return serviceUrl;
@@ -239,5 +243,14 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
 
     public void setLocalEnvironmentName(String localEnvironmentName) {
         this.localEnvironmentName = localEnvironmentName;
+    }
+
+    @Override
+    public Map<String, String> getCustomHeaders() {
+        return customHeaders;
+    }
+
+    public void setCustomHeaders(Map<String, String> customHeaders) {
+        this.customHeaders = customHeaders;
     }
 }
