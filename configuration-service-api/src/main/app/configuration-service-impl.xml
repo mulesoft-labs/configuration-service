@@ -180,21 +180,10 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <mongo:find-one-and-update-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.configuration}" query-ref="#[flowVars.updateQuery]" upsert="true" doc:name="Mongo DB"/>
     </sub-flow>
     <sub-flow name="add-update-document-subflow">
+        <set-payload value="#[new org.bson.Document('value', org.apache.commons.io.IOUtils.toByteArray(payload))]" mimeType="application/java" doc:name="Set Payload"/>
         <flow-ref name="findAnd-Validate-configuration-Subflow" doc:name="findAnd-Validate-configuration-Subflow"/>
         <logger message="ObjectId for storing document #[flowVars.objectId]" level="INFO" doc:name="Log ObjectId for Document"/>
-        <dw:transform-message doc:name="Upsert Document">
-            <dw:set-payload resource="classpath:input/upsert-document.dwl"/>
-            <dw:set-variable variableName="updateQuery"><![CDATA[%dw 1.0
-%output application/java
----
-{
-	configId: flowVars.objectId,
-	key : flowVars.key,
-	type : inboundProperties['content-type']
-} as :object {class : 'org.bson.Document'}
-	
-]]></dw:set-variable>
-        </dw:transform-message>
+        <set-variable variableName="updateQuery" value="#[new org.bson.Document('configId', flowVars.objectId).append('key', flowVars.key).append('type',message.inboundProperties['Content-type'])]" mimeType="application/java" doc:name="Update Query"/>
         <mongo:find-one-and-update-document config-ref="Mongodb_CaaS_configuration" collection="${caas.collection.documents}" query-ref="#[flowVars.updateQuery]" upsert="true" doc:name="Upsert Document"/>
     </sub-flow>
     <sub-flow name="find-document-subflow">
