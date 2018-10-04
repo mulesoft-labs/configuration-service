@@ -6,7 +6,7 @@
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
-	<mongo:config name="Mongodb_CaaS_configuration" database="${caas.db}" host="${mongodb.host}:${mongodb.port}" doc:name="Mongo DB: Configuration" />
+	<mongo:config name="Mongodb_CaaS_configuration" database="${caas.db}" host="${mongodb.host}:${mongodb.port}" doc:name="Mongo DB: Configuration" password="${mongodb.password}"  username="${mongodb.user}" ssl="${mongodb.ssl}"/>
 	<context:property-placeholder location="caas-${env}.properties" />
 	<spring:beans>
 		<spring:bean id="encryptionDataProvider" name="encryptionDataProvider" class="org.mule.modules.caas.encryption.EncryptionDataProvider">
