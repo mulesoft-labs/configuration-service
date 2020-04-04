@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="api-main">
+		<http:listener path="/${api.name}/${api.path}/*" config-ref="api-httpListenerConfig">
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router config-ref="api-config" />
+		<error-handler ref="global-error-handler" />
+	</flow>
+	<flow name="api-console">
+		<http:listener path="/${api.name}/${api.path}/console/*" config-ref="api-httpListenerConfig">
+			<http:response statusCode="#[vars.httpStatus default 200]" />
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<apikit:console config-ref="api-config" />
+		<error-handler ref="global-error-handler" />
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env)\dynamic\(key):application\json:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env"><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+				<ee:set-variable variableName="key"><![CDATA[attributes.uriParams.'key']]></ee:set-variable>
+				<ee:set-variable variableName="content-type" ><![CDATA['application/json']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[output application/java --- dw::core::Binaries::toBase64(payload.^raw)]" doc:name="Set Value" doc:id="2d3d4daa-0a79-40a1-a294-9739c4a6f00a" variableName="value"/>
+		<flow-ref doc:name="upsert-document" doc:id="ee8351b6-8eec-41f9-bbab-47951a3d351e" name="upsert-document"/>
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env)\dynamic\(key):application\dw:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env"><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+				<ee:set-variable variableName="key"><![CDATA[attributes.uriParams.'key']]></ee:set-variable>
+				<ee:set-variable variableName="content-type" ><![CDATA['application/dw']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[output application/java --- dw::core::Binaries::toBase64(payload.^raw)]" doc:name="Set Value" doc:id="14fb008f-9c05-4b94-bdaa-ae8b9d75edbd" variableName="value" />
+		<flow-ref doc:name="upsert-document" doc:id="bc4f643d-a3f7-4603-9879-ea9437817e47" name="upsert-document"/>
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env)\dynamic\(key):application\xml:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env"><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+				<ee:set-variable variableName="key"><![CDATA[attributes.uriParams.'key']]></ee:set-variable>
+				<ee:set-variable variableName="content-type" ><![CDATA[attributes.headers.'content-type' default 'application/xml']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[output application/java --- dw::core::Binaries::toBase64(payload.^raw)]" doc:name="Set Value" doc:id="8fa09e6f-ea1a-4766-aa00-382c801d980a" variableName="value" />
+		<flow-ref doc:name="upsert-document" doc:id="d1792720-177e-4dd1-bcb7-fdffac27f622" name="upsert-document"/>
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env)\dynamic\(key):application\yaml:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env"><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+				<ee:set-variable variableName="key"><![CDATA[attributes.uriParams.'key']]></ee:set-variable>
+				<ee:set-variable variableName="content-type" ><![CDATA['application/yaml']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[output application/java --- dw::core::Binaries::toBase64(payload.^raw)]" doc:name="Set Value" doc:id="8c58d69f-6b78-454a-86f7-cd04360e9505" variableName="value" />
+		<flow-ref doc:name="upsert-document" doc:id="7a899b8a-fb1b-49e1-a517-c17cd98b67e0" name="upsert-document"/>
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env)\dynamic\(key):text\plain:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env"><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+				<ee:set-variable variableName="key"><![CDATA[attributes.uriParams.'key']]></ee:set-variable>
+				<ee:set-variable variableName="content-type" ><![CDATA['text/plain']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[output application/java --- dw::core::Binaries::toBase64(payload.^raw)]" doc:name="Set Value" doc:id="2ae282ba-2092-44e9-b003-654ac0138d27" variableName="value" />
+		<flow-ref doc:name="upsert-document" doc:id="dcc6800b-d7ba-4a1a-9bed-514039517398" name="upsert-document" />
+	</flow>
+	<flow name="put:\configuration\(application)\(configVersion)\(env):application\json:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application">attributes.uriParams.'application'</ee:set-variable>
+				<ee:set-variable variableName="configVersion">attributes.uriParams.'configVersion'</ee:set-variable>
+				<ee:set-variable variableName="env">attributes.uriParams.'env'</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="update-properties" doc:id="0eed88c5-8e37-4e11-b74a-5632573c7f2f" name="update-properties"/>
+	</flow>
+	<flow name="patch:\configuration\(application)\(configVersion)\(env):application\json:api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application">attributes.uriParams.'application'</ee:set-variable>
+				<ee:set-variable variableName="configVersion">attributes.uriParams.'configVersion'</ee:set-variable>
+				<ee:set-variable variableName="env">attributes.uriParams.'env'</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="patch-properties" doc:id="65bc0a37-91e6-4c43-9c23-9af201128889" name="patch-properties"/>
+	</flow>
+	<flow name="get:\configuration:api-config">
+		<flow-ref doc:name="find-configurations" doc:id="cd76f662-cb14-49ee-b8b5-11540748a395" name="find-configurations"/>
+	</flow>
+	<flow name="get:\configuration\(application)\(configVersion)\(env)\dynamic\(key):api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application">attributes.uriParams.'application'</ee:set-variable>
+				<ee:set-variable variableName="configVersion">attributes.uriParams.'configVersion'</ee:set-variable>
+				<ee:set-variable variableName="env">attributes.uriParams.'env'</ee:set-variable>
+				<ee:set-variable variableName="key">attributes.uriParams.'key'</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="find-document" doc:id="f23e2b41-ad54-4637-826a-579f984e77f8" name="find-document"/>
+	</flow>
+	<flow name="get:\configuration\(application)\(configVersion)\(env):api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application">attributes.uriParams.'application'</ee:set-variable>
+				<ee:set-variable variableName="configVersion">attributes.uriParams.'configVersion'</ee:set-variable>
+				<ee:set-variable variableName="env">attributes.uriParams.'env'</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="find-cofig-and-documents" doc:id="b166ab41-a5cf-4d67-9ec8-b556d56c1708" name="find-cofig-and-documents"/>
+	</flow>
+	<flow name="post:\configuration:application\json:api-config">
+		<flow-ref doc:name="insert-config" doc:id="afc54fb0-a229-4e38-a20e-5c170af4ef84" name="insert-config"/>
+	</flow>
+	<flow name="post:\configuration\(application)\(configVersion)\(env)\copy\(toVersion):api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application"><![CDATA[attributes.uriParams.'application']]></ee:set-variable>
+				<ee:set-variable variableName="configVersion"><![CDATA[attributes.uriParams.'configVersion']]></ee:set-variable>
+				<ee:set-variable variableName="toVersion"><![CDATA[attributes.uriParams.'toVersion']]></ee:set-variable>
+				<ee:set-variable variableName="env" ><![CDATA[attributes.uriParams.'env']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="copy-to-version" doc:id="2019ec7e-9cfd-4348-8ae1-2b008a17b727" name="copy-to-version"/>
+		<set-payload value='#[output application/json --- {message : "Copied to newVersion"}]' doc:name="Set Payload" doc:id="4281129d-01db-415b-b3b2-aec3f544a844" />
+	</flow>
+	<flow name="post:\configuration\(application)\(configVersion)\(env)\promote\(toEnv):api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+			<ee:variables>
+				<ee:set-variable variableName="application">attributes.uriParams.'application'</ee:set-variable>
+				<ee:set-variable variableName="configVersion">attributes.uriParams.'configVersion'</ee:set-variable>
+				<ee:set-variable variableName="env">attributes.uriParams.'env'</ee:set-variable>
+				<ee:set-variable variableName="toEnv">attributes.uriParams.'toEnv'</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="promote-config" doc:id="9084606a-fb7c-4d5c-97dc-28198efb984f" name="promote-config"/>
+		<set-payload value='#[output application/json --- {message : "Config promoted"}]' doc:name="Set Payload" doc:id="614bc4e7-20ca-4b37-9a97-79193c8eb45c" />
+	</flow>
+</mule>

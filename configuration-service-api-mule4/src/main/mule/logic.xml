@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="find-configurations" doc:id="e6858b54-d7bc-4668-94a3-096ea3f4e99a" >
+		<set-variable value="#[attributes.scheme ++ &quot;://&quot; ++ attributes.headers.'host' ++ attributes.'rawRequestUri']" doc:name="Set BasePath" doc:id="9fa127a2-19e2-46b6-95e7-5bc49bd7307e" variableName="href"/>
+		<mongo:find-documents doc:name="Find documents" doc:id="6ebd4189-0069-4246-a986-1e44cb6d8b6f" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}" fields="#['']">
+		</mongo:find-documents>
+		<ee:transform doc:name="Response" doc:id="6c1abc0b-e481-4fd8-8fc5-3a7b7e6b7ab0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+fun createHref(basePath,obj) = basePath ++ "/" ++
+								(obj.application default '') ++ '/' ++
+								obj.version ++ '/' ++
+								obj.environment
+								
+---
+payload map ((item) -> {
+
+	application: item.application,
+	version: item.version, 
+	environment: item.environment,
+	links: [
+		{
+			href: createHref(vars.href, item)
+		}
+	]
+	
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="find-config-by-app-version-and-env" doc:id="f036aab9-5ff4-46cc-abb8-6e9c75430755" >
+		<logger level="INFO" doc:name="Log App, Env, Version" doc:id="7f70f455-f815-4f5f-b1a3-7f81973e2a8e" message="Finding Config for App #[vars.application], Version #[vars.configVersion], ENV #[vars.env]"/>
+		<mongo:find-documents doc:name="Find documents" doc:id="1f36daec-77c7-4af2-9f6b-e937873be007" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}" fields="#['']">
+			<mongo:query ><![CDATA[#[output application/json --- 
+{
+	application: vars.application,
+	version : vars.configVersion,
+	environment: vars.env
+}]]]></mongo:query>
+		</mongo:find-documents>
+		<ee:transform doc:name="Configs" doc:id="6fe43bd9-8d8b-4194-a935-b8cfe3cb0650" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="find-config-and-validate" doc:id="4db86eb3-64fa-4067-baa5-0f3b5e5cda31" >
+		<flow-ref doc:name="find-config-by-app-version-and-env" doc:id="5ae81b02-b4b6-49e0-aab8-dc06c8742553" name="find-config-by-app-version-and-env"/>
+		<validation:is-false doc:name="Is false" doc:id="2e25e069-d7be-4d11-85ff-7f6b793b1f8d" expression="#[payload.application == null]" message="NO Config Found" />
+		<set-variable value="#[payload.'_id'.&quot;\$oid&quot;]" doc:name="Set ObjectId" doc:id="c7ccfda2-3798-4191-8230-2cb3855426ea" variableName="objectId" />
+	</sub-flow>
+	<sub-flow name="find-cofig-and-documents" doc:id="1ae9398c-13dd-4d7b-8a3f-2d1a73153574" >
+		<set-variable value="#[attributes.scheme ++ &quot;://&quot; ++ attributes.headers.'host' ++ attributes.'rawRequestUri']" doc:name="Set BasePath" doc:id="a38a8d4d-8953-4200-8f74-66c7af0b4996" variableName="href" />
+		<flow-ref doc:name="find-config-and-validate" doc:id="3087edd7-3846-4f57-943c-82f9a7fac956" name="find-config-and-validate"/>
+		<flow-ref doc:name="find-documents-by-objectId-and-docName" doc:id="41a676ca-6bcc-4f02-9608-9a99249503f6" name="find-documents-by-objectId-and-docName" target="documents" />
+		<ee:transform doc:name="Response" doc:id="4a84a1d4-033f-4f4a-9da0-8361bea6d81d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+fun createHref(basePath,obj,docName) = basePath ++ '/dynamic/' ++ docName
+								
+								
+								
+---
+{
+	application: payload.application,
+	version: payload.version,
+	environment: payload.environment,
+    imports: payload.imports default [],
+	properties: payload.properties default {} mapObject ((v, k) -> {
+		(k as String replace "__" with "."): v
+	}),
+	documents: vars.documents default [] map ((document) -> {
+		key: document.'key',
+		'type': document.'type',
+		links: [
+		{
+			"ref": "self",
+			href: createHref(vars.href, payload,document.'key')
+		}
+	]
+		
+	})
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="find-documents-by-objectId-and-docName" doc:id="78c22f5b-a5c0-484a-a83d-7a4e1fcc9183" >
+		<logger level="INFO" doc:name="Logger" doc:id="53c09862-55ee-4721-9922-666a91166aa9" message="Finding Documents for objectId #[vars.objectId], docKey #[vars.'key']"/>
+		<mongo:find-documents collectionName="${mongodb.collection.documents}" fields="#['']" doc:name="Find documents" doc:id="8c552543-92f2-4a0c-91a1-ba10ccf76dca" config-ref="CaaS_MongoDB_Config" >
+			<mongo:query ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	configId: vars.objectId,
+	(('key'): vars.'key') if(not isBlank(vars.'key'))
+}]]]></mongo:query>
+		</mongo:find-documents>
+		<ee:transform doc:name="To JSON" doc:id="7ae23a43-bf4c-42ce-bc0f-17c4182bf853" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="insert-config" doc:id="b64c8312-7914-4254-ad96-b61aede5ae5e" >
+		<ee:transform doc:name="Transform Message" doc:id="d7e89146-8b64-4442-99b3-0d4101aec833" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="application" ><![CDATA[payload.application]]></ee:set-variable>
+				<ee:set-variable variableName="env" ><![CDATA[payload.environment]]></ee:set-variable>
+				<ee:set-variable variableName="configVersion" ><![CDATA[payload.version]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="find-config-by-app-version-and-env" doc:id="bdfe0026-7b75-45de-a5b8-888e18e781f1" name="find-config-by-app-version-and-env" target="existingConfig"/>
+		<validation:is-false doc:name="Is false" doc:id="f7ff1598-237e-4a9e-85f8-fc3ee8e11dad" expression="#[vars.existingConfig.application !=null]" message="Config already exists"/>
+		<ee:transform doc:name="Insert Payload" doc:id="47a7f7e3-e7fe-4b6c-9664-a145dc90b544" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	application: vars.application,
+	version: vars.configVersion,
+	environment: vars.env,
+	imports: payload.imports,
+	properties: payload.properties default {} mapObject ((v,k) -> {
+		(k as String replace "." with "__") : v
+	})
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<mongo:insert-document doc:name="Insert document" doc:id="10f25eea-7e7d-4e9b-948e-0db0068feebe" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}"/>
+		<ee:transform doc:name="Transform Message" doc:id="db21fe00-5e20-4ada-8c1b-749051b0e03b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : "Configuration saved"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="upsert-document" doc:id="e47b3648-7cdf-4c64-aeed-5f716769416b" >
+		<flow-ref doc:name="find-config-and-validate" doc:id="9e371ea5-9f8a-4384-99cc-df310296fc7e" name="find-config-and-validate" target="existingConfig" />
+		<set-variable value="#[vars.existingConfig.'_id'.&quot;\$oid&quot;]" doc:name="Set ObjectId" doc:id="6eaec906-330c-45b3-b406-75f26e9b45a6" variableName="objectId" />
+		<flow-ref doc:name="find-documents-by-objectId-and-docName" doc:id="fdded33c-d547-4a13-aac8-e05054050830" name="find-documents-by-objectId-and-docName" target="existingDocument"/>
+		<ee:transform doc:name="Transform Message" doc:id="99999b9e-a49b-4f12-bcd8-b1ac6eb3b55b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+{
+	configId: vars.objectId,
+	key: vars.'key',
+	'type': vars.'content-type',
+	value: vars.value
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Insert or Update?" doc:id="955dca36-a1a1-4a2f-8645-8e8c808fce7c" >
+			<when expression="#[isEmpty(vars.existingDocument default [])]">
+				<logger level="INFO" doc:name="Log Insert" doc:id="8fc67c3a-e440-41ee-946c-193c3e68887a" message="Inserting document #[vars.'key']"/>
+				<mongo:insert-document doc:name="Insert document" doc:id="16049727-8877-405c-81b0-61d797a66282" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.documents}" />
+				<set-payload value='#[output application/json --- {message : "Document Inserted"}]' doc:name="Set Payload" doc:id="a7bd66dd-a917-4e39-b5c5-108443fcf5b1" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Updating Document" doc:id="f62f696e-5560-4af4-afab-d39ee81ddddc" message="Updating Document #[vars.'key']"/>
+				<mongo:update-documents doc:name="Update documents" doc:id="ead4052b-eb96-479d-98d4-161c5dd9ea1f" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.documents}">
+					<mongo:query ><![CDATA[#[output application/json --- 
+{
+	configId: vars.objectId,
+	'key': vars.'key'
+}]]]></mongo:query>
+				</mongo:update-documents>
+				<set-payload value='#[output application/json --- {message : "Document Updated"}]' doc:name="Set Payload" doc:id="6636479d-3721-414e-af84-85ffc8fa5b89" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="find-one-document" doc:id="4d530813-bd0c-41cd-a88f-16323c302aab" >
+		<flow-ref doc:name="find-config-and-validate" doc:id="045516f5-fef2-4d8b-b90f-ae0ae618e39d" name="find-config-and-validate" target="existingConfig" />
+		<set-variable value="#[vars.existingConfig.'_id'.&quot;\$oid&quot;]" doc:name="Set ObjectId" doc:id="f40bc5c6-a908-4165-8571-b721d8bed24c" variableName="objectId" />
+		<flow-ref doc:name="find-documents-by-objectId-and-docName" doc:id="62e5562c-4fbc-4433-9347-19084431c66e" name="find-documents-by-objectId-and-docName"/>
+	</sub-flow>
+	<flow name="find-document" doc:id="4ddb5800-391a-48cc-8a55-b2015c2c409b" >
+		<flow-ref doc:name="find-one-document" doc:id="2a70b7d9-a87f-4fd8-89e3-d5a816c7f76f" name="find-one-document"/>
+		<set-payload value="#[payload[0]]" doc:name="Set Payload" doc:id="da266777-a162-4e23-9c00-3646860514b3" />
+		<validation:is-false doc:name="Is false" doc:id="c71f5f88-234b-4960-944c-d38bf4342078" expression="#[payload.configId == null]" message="No Document found"/>
+		<set-variable value="#[payload.value]" doc:name="Set Data" doc:id="cd9f5f44-6d12-4370-a70f-cbc01bb1c6f3" variableName="data"/>
+		<set-variable value="#[output text/plain --- 'read(dw::core::Binaries::fromBase64(data), &quot;' ++  payload.'type' ++ ' &quot;)']" doc:name="Set Script" doc:id="75e340ca-7d59-43e8-bd6c-e82c394438e9" variableName="script"/>
+		<set-variable value="#[{'content-type': payload.'type'}]" doc:name="Set Content-Type" doc:id="4ac475c5-3b7a-4531-885a-5f18d1153969" variableName="outboundHeaders"/>
+		<ee:dynamic-evaluate doc:name="Dynamic Evaluate" doc:id="bd293c15-626d-4016-95c4-d777f87d6c94" expression="#['output ' ++  payload.'type' ++ ' --- '  ++ vars.script]">
+			<ee:parameters >#[{data: vars.data}]</ee:parameters>
+		</ee:dynamic-evaluate>
+	</flow>
+	<sub-flow name="patch-properties" doc:id="5ae96372-7786-4fb2-95bf-c590f509950e" >
+		<flow-ref doc:name="find-config-and-validate" doc:id="dde9b8db-44d1-4581-8272-5a810719d3cb" name="find-config-and-validate" target="existingConfig"/>
+		<ee:transform doc:name="Patch Properties" doc:id="f6ce1d1c-ddcb-49ab-8247-9eaf361fb6a4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var newProperties = payload.properties default {}
+var toAddProps = newProperties filterObject((v,k) -> do {
+	var formattedKey = k as String replace "." with "__"
+	---
+	vars.existingConfig.properties[formattedKey] == null
+})
+---
+((
+	vars.existingConfig.properties mapObject ((v, k) -> do {
+	
+	var formattedKey = k as String replace "__" with "."
+	---
+	(k) : if(isBlank(newProperties[formattedKey])) v else newProperties[formattedKey]
+})
+)
+++ (toAddProps default {})) mapObject ((v,k) -> (k as String replace "." with "__"): v) ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Patch Payload" doc:id="4e70fe4f-bad2-4e59-84a1-41e8d0ace173" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	application: vars.existingConfig.'application',
+	version: vars.existingConfig.'version',
+	environment: vars.existingConfig.'environment',
+	imports: vars.existingConfig.'imports',
+	properties: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<mongo:update-documents doc:name="Update documents" doc:id="cb98e0ad-f2ef-4e14-b7cd-945cd4094cda" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}">
+			<mongo:query ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	application: payload.application,
+	version: payload.version,
+	environment: payload.environment
+}]]]></mongo:query>
+		</mongo:update-documents>
+		<set-payload value='#[output application/json --- {message : "Properties Patched"}]' doc:name="Set Payload" doc:id="2b6f64a8-e7ef-4e6a-8e3c-8557a7348280" />
+	</sub-flow>
+	<sub-flow name="update-properties" doc:id="93d60e73-d0d2-46ae-8b72-ee439710b962" >
+		<flow-ref doc:name="find-config-and-validate" doc:id="53fca223-0a0e-4683-94c8-1799a9a07cf1" name="find-config-and-validate" target="existingConfig"/>
+		<ee:transform doc:name="Update Properties" doc:id="7ea70e81-a2af-42bc-b5e0-7baf47a22ae2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	application: vars.existingConfig.'application',
+	version: vars.existingConfig.'version',
+	environment: vars.existingConfig.'environment',
+	imports: vars.existingConfig.'imports',
+	properties: payload.properties
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<mongo:update-documents collectionName="${mongodb.collection.configuration}" doc:name="Update documents" doc:id="850f4eba-e92b-4fd0-993d-aa16be3c1418" config-ref="CaaS_MongoDB_Config" >
+			<mongo:query ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	application: payload.application,
+	version: payload.version,
+	environment: payload.environment
+}]]]></mongo:query>
+		</mongo:update-documents>
+		<set-payload value='#[output application/json --- {message : "Properties updated"}]' doc:name="Set Payload" doc:id="e3ab6cab-b94d-462a-bb9d-af2a23c0c74a" />
+	</sub-flow>
+	<sub-flow name="copy-to-version" doc:id="22bbeba8-8dbf-48c1-bee6-eb497d817328" >
+		<flow-ref doc:name="find-config-and-validate" doc:id="33c6ec12-ce71-4dd8-899d-674634018809" name="find-config-and-validate" target="existingConfig"/>
+		<set-variable value="#[vars.existingConfig.'_id'.&quot;\$oid&quot;]" doc:name="Set Old ObjectId" doc:id="ff87652a-51da-4fc9-8bf6-05faec4f7624" variableName="oldObjectId"/>
+		<ee:transform doc:name="To Version Config" doc:id="2b9d3139-b276-423c-a0a3-fcdfbf895a27" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	application: vars.existingConfig.application,
+	version: vars.toVersion,
+	environment: vars.existingConfig.environment,
+	imports : vars.existingConfig.imports,
+	properties: vars.existingConfig.properties default {} mapObject ((value, key) -> (key as String replace "." with "__"): value)
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[vars.toVersion]" doc:name="Set NewVersion" doc:id="543b8142-e248-4d9b-a77c-e833556d7bd1" variableName="configVersion"/>
+		<flow-ref doc:name="Find New Config" doc:id="fba62c06-b4e8-4510-b729-5b4d356c6ac8" name="find-config-by-app-version-and-env" target="toVersionConfig"/>
+		<validation:is-false doc:name="Is false" doc:id="080f664f-9954-408f-b9e5-ab165c44be3b" expression="#[vars.toVersionConfig != null]" message="toVersion config exists"/>
+		<mongo:insert-document doc:name="Copy Config toVersion" doc:id="6fdcf4db-5e37-4696-93a2-9cc1df9e856f" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}"/>
+		<set-variable value="#[payload.'_id'.&quot;\$oid&quot;]" doc:name="New ObjectId" doc:id="3d5637a5-7b4b-4b57-b1c0-dec9abd96e15" variableName="toVersionObjectId"/>
+		<logger level="INFO" doc:name="Log toVersion ObjectId" doc:id="0c477aae-beb1-4e3b-b159-4db686ee07ba" message="ToVersion ObjectId #[vars.toVersionObjectId]"/>
+		<set-variable value="#[vars.oldObjectId]" doc:name="Set Variable" doc:id="fc169f39-49fa-4650-bc2c-62413feefd79" variableName="objectId" />
+		<flow-ref doc:name="find-documents-by-objectId-and-docName" doc:id="8220630f-b6a7-4d42-a5de-e56208994abc" name="find-documents-by-objectId-and-docName"/>
+		<foreach doc:name="For Each" doc:id="bf1194dc-050e-4371-8ee1-642e5d6250bb" >
+			<mongo:insert-document doc:name="Insert document" doc:id="a7c1289d-21e3-44b0-8e8e-d2eb8ef0ccbb" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.documents}">
+				<mongo:document ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	configId : vars.toVersionObjectId,
+	key: payload.key,
+	'type': payload.'type',
+	value : payload.value
+}]]]></mongo:document>
+			</mongo:insert-document>
+		</foreach>
+	</sub-flow>
+	<sub-flow name="promote-config" doc:id="55d768bf-9318-4e0d-90ef-ea575a0c18df" >
+			<flow-ref doc:name="find-config-and-validate" doc:id="33c6ec12-ce71-4dd8-899d-674634018809" name="find-config-and-validate" target="existingConfig"/>
+		<set-variable value="#[vars.existingConfig.'_id'.&quot;\$oid&quot;]" doc:name="Set Old ObjectId" doc:id="ff87652a-51da-4fc9-8bf6-05faec4f7624" variableName="oldObjectId"/>
+		<ee:transform doc:name="To Promote" doc:id="2b9d3139-b276-423c-a0a3-fcdfbf895a27" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	application: vars.existingConfig.application,
+	version: vars.existingConfig.version,
+	environment: vars.toEnv,
+	imports : vars.existingConfig.imports,
+	properties: vars.existingConfig.properties default {} mapObject ((value, key) -> (key as String replace "." with "__"): value)
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[vars.toEnv]" doc:name="Set Environment" doc:id="543b8142-e248-4d9b-a77c-e833556d7bd1" variableName="env"/>
+		<flow-ref doc:name="Find New Config" doc:id="fba62c06-b4e8-4510-b729-5b4d356c6ac8" name="find-config-by-app-version-and-env" target="promoteConfig"/>
+		<validation:is-false doc:name="Is false" doc:id="080f664f-9954-408f-b9e5-ab165c44be3b" expression="#[vars.promoteConfig != null]" message="toPromote config exists"/>
+		<mongo:insert-document doc:name="Promote To Env" doc:id="6fdcf4db-5e37-4696-93a2-9cc1df9e856f" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.configuration}"/>
+		<set-variable value="#[payload.'_id'.&quot;\$oid&quot;]" doc:name="New ObjectId" doc:id="3d5637a5-7b4b-4b57-b1c0-dec9abd96e15" variableName="toPromoteObjectId"/>
+		<logger level="INFO" doc:name="Log toPromote ObjectId" doc:id="0c477aae-beb1-4e3b-b159-4db686ee07ba" message="To Promote ObjectId #[vars.toVersionObjectId]"/>
+		<set-variable value="#[vars.oldObjectId]" doc:name="Set Variable" doc:id="fc169f39-49fa-4650-bc2c-62413feefd79" variableName="objectId" />
+		<flow-ref doc:name="find-documents-by-objectId-and-docName" doc:id="8220630f-b6a7-4d42-a5de-e56208994abc" name="find-documents-by-objectId-and-docName"/>
+		<foreach doc:name="For Each" doc:id="bf1194dc-050e-4371-8ee1-642e5d6250bb" >
+			<mongo:insert-document doc:name="Insert document" doc:id="a7c1289d-21e3-44b0-8e8e-d2eb8ef0ccbb" config-ref="CaaS_MongoDB_Config" collectionName="${mongodb.collection.documents}">
+				<mongo:document ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	configId : vars.toPromoteObjectId,
+	key: payload.key,
+	'type': payload.'type',
+	value : payload.value
+}]]]></mongo:document>
+			</mongo:insert-document>
+		</foreach>
+	</sub-flow>
+</mule>

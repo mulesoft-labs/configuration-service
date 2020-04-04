@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<error-handler name="global-error-handler">
+		<on-error-propagate type="HTTP:UNAUTHORIZED"
+			enableNotifications="true" logException="true">
+			<ee:transform
+				doc:id="012ffb2f-2754-492d-8d1c-9258c2b4c847">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Unauthorized", p('api.code') ++ "-401"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[401]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="MULE:SECURITY"
+			enableNotifications="true" logException="true">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="b30d7f9f-8944-4ebd-8257-d47c8b7ff675">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Forbidden", p('api.code') ++ "-403"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[403
+						]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:BAD_REQUEST">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="89390e90-7819-4fd6-b6ee-560410fc5e83">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Bad request", p('api.code') ++ "-400"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[400
+						]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_FOUND">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="2f2a3023-1396-4026-a988-bef275234394">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Resource not found", p('api.code') ++ "-404"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[404
+						]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate
+			type="APIKIT:METHOD_NOT_ALLOWED">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="14e29c2a-758e-48f8-afca-f7fa34ca7073">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Method not allowed", p('api.code') ++ "-405"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[405
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="4925db21-661b-47ea-9325-2f77b0127a40">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Not acceptable", p('api.code') ++ "-406"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[406
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate
+			type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="298fbd49-2bce-4ef8-ab08-37a44758676f">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Unsupported media type", p('api.code') ++ "-415"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[415
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+			<ee:transform
+				xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="c5511274-3b7b-43bf-83ba-5e6a0a39fe7d">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Not implemented", p('api.code') ++ "-501"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[501
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate
+			type="HTTP:BASIC_AUTHENTICATION" enableNotifications="true"
+			logException="true">
+			<ee:transform doc:name="Transform Message"
+				doc:id="27f23af9-d613-4929-95bd-854b216011dd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+---
+log("Error: ", common::mapError(error, correlationId, "Unauthorized request", p('api.code') ++ "-401"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[401			]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="44bff9a0-fb54-4ed7-b2de-d7c759e3d500"
+			type="VALIDATION:INVALID_BOOLEAN">
+			<ee:transform doc:name="Transform Message"
+				doc:id="e9afb334-fc73-4620-b3f2-851a7e831b35">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, error.errorMessage.payload.message default 'Internal Server Error', p('api.code') ++ "-404"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="14c30522-5eed-4c3b-b622-bc780c666af4" type="ANY">
+			<ee:transform doc:name="Transform Message"
+				doc:id="5093697f-5720-49dd-a8cb-60a0bfdb43b0">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import modules::common
+
+---
+log("Error: ", common::mapError(error, correlationId, "Internal server error", p('api.code') ++ "-500"))]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+</mule>

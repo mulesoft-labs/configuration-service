@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:mule-zuora-connector="http://www.mulesoft.org/schema/mule/mule-zuora-connector" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/mule-zuora-connector http://www.mulesoft.org/schema/mule/mule-zuora-connector/current/mule-mule-zuora-connector.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+	<global-property name="mule.env" value="local" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="2f1ec099-8cb5-4e42-a3ca-e65150ac3f0b"
+		file="config/caas-${mule.env}-config.yaml" key="changeitsecurity" />
+	<configuration-properties doc:name="Environment config file" file="config/caas-${mule.env}-config.yaml" />
+	<configuration-properties doc:name="Application config file" file="base-api-config.yaml" />
+	<http:listener-config name="api-httpListenerConfig">
+		<http:listener-connection host="${http.host}" port="${http.port}" />
+	</http:listener-config>
+	<apikit:config name="api-config" api="api/api.raml"
+		outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<mongo:config name="CaaS_MongoDB_Config" doc:name="MongoDB Config" doc:id="4e0e03a3-abe3-45f7-b8c7-13e6676a6e75" >
+		<mongo:connection database="${mongodb.db}" >
+			<mongo:server-addresses >
+				<mongo:server-address host="${mongodb.host}" port="${mongodb.port}" />
+			</mongo:server-addresses>
+		</mongo:connection>
+	</mongo:config>
+	<configuration doc:name="Configuration" doc:id="493db9ca-1b51-418a-b659-af888d24925c" defaultErrorHandler-ref="global-error-handler" />
+
+</mule>

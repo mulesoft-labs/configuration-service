@@ -1,0 +1,7 @@
+api:
+  name: "configuration-service"
+  path: "v1"
+  code: "caas"
+
+
+    

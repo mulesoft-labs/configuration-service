@@ -1,0 +1,88 @@
+#%RAML 1.0
+title: Application Configuration Service
+version: 1.0
+
+mediaType: [application/json, application/xml, application/dw, application/yaml, text/plain, application/csv]
+
+baseUri: http://localhost:8081
+
+types: 
+  ConfigCoordinate: !include model/ConfigCoordinate.raml
+  Document: !include model/Document.raml
+  ConfigurationElement: !include model/ConfigurationElement.raml
+
+traits: 
+  StandardHTTPStatusReporter: !include traits/StandardHttpStatusReporter.raml
+  StateTransferOperation: !include traits/StateTransferOperation.raml
+  ResourceAccess: !include traits/ResourceAccess.raml
+/configuration:
+  description: Configuration of properties for specified environment
+  
+  get:
+    is: [StandardHTTPStatusReporter]
+    description: List all configurations managed by this onfiguration server.
+    responses:
+      200:
+        body: 
+          application/json:
+            type: ConfigCoordinate[]
+            example: !include examples/ConfigCoordinate.raml
+  post:
+    is: [StandardHTTPStatusReporter, StateTransferOperation]
+    description: Create a brand new configuration for this service.
+    body: 
+      application/json:
+        type: ConfigurationElement
+        example: !include examples/ExampleCreateConfig.raml
+  
+  /{application}/{configVersion}:    
+    /{env}:
+      is: [StandardHTTPStatusReporter, ResourceAccess]
+      get:
+        description: retrieve the environment properties for 'env={env}'
+        responses: 
+          200:
+            body:
+              application/json:
+                type: ConfigurationElement
+                example: !include examples/ExampleConfiguration.raml
+      put:
+        is: [StateTransferOperation]
+        description: Replace the current environment configuration with the one provided in the request body.
+        body: 
+          application/json:
+            example: !include examples/ExampleUpdateConfig.raml
+      patch:
+        is: [StateTransferOperation]
+        description: Updates or creates keys in the properties object without removing the existing ones, this operation can be used to create new keys or replace existing values.
+        body:
+          application/json:
+            example: !include examples/ExampleUpdateConfig.raml
+      /dynamic/{key}:
+        is: [StandardHTTPStatusReporter, ResourceAccess]
+        get:
+          description: Retrieve the dynamic configuration document for the given key.
+          responses: 
+            200:
+              headers: 
+                Content-Type:
+                  description: The content type of te custom configuration element.
+              body: any
+                #random content of various content types could appear here.
+        put:
+          is: [StateTransferOperation]
+          description: Create or update a dynamic configuration element.
+          headers: 
+            Content-Type:
+              description: The content type of the newly created or updated document.
+          body: any
+            #random content of various content types could appear here.
+      /copy/{toVersion}:
+       post:
+        is: [StandardHTTPStatusReporter, StateTransferOperation]
+        description: Controller method to copy one version of the application settings to the version specified by {toVersion} on all environments.
+             
+      /promote/{toEnv}:
+        post:
+          is: [StandardHTTPStatusReporter, StateTransferOperation]
+          description: Controller method to promote the configuration of the environment defined by {env} into the environment defined by /{toEnv}
