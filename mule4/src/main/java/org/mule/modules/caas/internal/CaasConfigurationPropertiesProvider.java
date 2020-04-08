@@ -1,43 +1,47 @@
 package org.mule.modules.caas.internal;
 
-import org.mule.modules.caas.ApplicationDataProvider;
 import org.mule.modules.caas.ConfigurationServiceException;
-import org.mule.modules.caas.client.DefaultApplicationDataProvider;
 import org.mule.modules.caas.model.ApplicationConfiguration;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationPropertiesProvider;
 import org.mule.runtime.config.api.dsl.model.properties.ConfigurationProperty;
 
-import javax.ws.rs.client.ClientBuilder;
 import java.util.Optional;
 
 public class CaasConfigurationPropertiesProvider implements ConfigurationPropertiesProvider {
 
     private final ApplicationConfiguration config;
     private final String serviceUrl;
+    private ConfigurationServiceConfig connectorConfig;
+    private SecurePropertyPlaceholderModule securePropertyPlaceholderModule;
 
-    public CaasConfigurationPropertiesProvider(String serviceUrl, ApplicationConfiguration config) throws ConfigurationServiceException {
+    public CaasConfigurationPropertiesProvider(String serviceUrl, ApplicationConfiguration config, ConfigurationServiceConfig configurationServiceConfig, SecurePropertyPlaceholderModule securePropModule) throws ConfigurationServiceException {
         this.config = config;
         this.serviceUrl = serviceUrl;
+        this.connectorConfig = configurationServiceConfig;
+        this.securePropertyPlaceholderModule = securePropModule;
     }
 
     @Override
     public Optional<ConfigurationProperty> getConfigurationProperty(String configurationAttributeKey) {
-
         String value = config.readProperty(configurationAttributeKey);
+        if (value == null) {
 
+            //try to read from system properties now
+            value = securePropertyPlaceholderModule.resolveEnvProperties(configurationAttributeKey);
+        }
         if (value == null) {
             return Optional.empty();
         }
-
+        String decryptedValue = securePropertyPlaceholderModule.convertPropertyValue(value);
         return Optional.of(new ConfigurationProperty() {
             @Override
             public Object getSource() {
-                return value;
+                return decryptedValue;
             }
 
             @Override
             public Object getRawValue() {
-                return value;
+                return decryptedValue;
             }
 
             @Override

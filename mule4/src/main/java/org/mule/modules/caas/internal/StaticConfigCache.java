@@ -2,8 +2,11 @@ package org.mule.modules.caas.internal;
 
 import org.mule.modules.caas.api.ConfigurationServiceException;
 import org.mule.modules.caas.model.ApplicationConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -11,6 +14,7 @@ import java.util.*;
  * available to the module and just loading them once.
  */
 public class StaticConfigCache {
+    static Logger LOGGER = LoggerFactory.getLogger(StaticConfigCache.class);
 
     private Map<String, List<ApplicationConfiguration>> staticConfigurationsCache;
     private Map<String, ConfigurationServiceConfig> serviceConfigs;
@@ -28,7 +32,6 @@ public class StaticConfigCache {
 
     public synchronized void store(String configId, ConfigurationServiceConfig serviceConfig, ApplicationConfiguration config) {
         List<ApplicationConfiguration> serviceCache = staticConfigurationsCache.getOrDefault(configId, new LinkedList<>());
-
         ApplicationConfiguration existing = serviceCache.stream()
                 .filter(a -> sameCoordinates(a, config))
                 .findAny().orElse(null);
@@ -36,15 +39,20 @@ public class StaticConfigCache {
         //if is brand new, add it.
         if (existing == null) {
             serviceCache.add(config);
+        } else {
+            //update the cache.
+            serviceCache.remove(existing);
+            serviceCache.add(config);
+
         }
 
-        //update the cache.
         staticConfigurationsCache.put(configId, serviceCache);
         serviceConfigs.put(configId, serviceConfig);
+
     }
 
 
-    private boolean sameCoordinates(ApplicationConfiguration a , ApplicationConfiguration b) {
+    private boolean sameCoordinates(ApplicationConfiguration a, ApplicationConfiguration b) {
         return a.getName().equals(b.getName()) &&
                 a.getVersion().equals(b.getVersion()) &&
                 a.getEnvironment().equals(b.getEnvironment());
@@ -56,16 +64,16 @@ public class StaticConfigCache {
     }
 
     public synchronized Optional<ApplicationConfiguration> findOne() throws ConfigurationServiceException {
-         return staticConfigurationsCache.entrySet()
-                 .stream().findAny()
-                 .orElseThrow(() -> new ConfigurationServiceException("No configuration present"))
-                 .getValue()
-                 .stream()
-                 .findAny();
+        return staticConfigurationsCache.entrySet()
+                .stream().findAny()
+                .orElseThrow(() -> new ConfigurationServiceException("No configuration present"))
+                .getValue()
+                .stream()
+                .findAny();
     }
 
     public Optional<ConfigurationServiceConfig> getServiceUrl(String configId) {
-        ConfigurationServiceConfig ret =  serviceConfigs.get(configId);
+        ConfigurationServiceConfig ret = serviceConfigs.get(configId);
 
         if (ret == null && !serviceConfigs.isEmpty()) {
             ret = serviceConfigs.entrySet()
@@ -75,5 +83,11 @@ public class StaticConfigCache {
 
         return Optional.ofNullable(ret);
     }
+
+    public Optional<SecurePropertyPlaceholderModule> getSecurePropertyModule(String configId) {
+        ConfigurationServiceConfig ret = serviceConfigs.get(configId);
+        return Optional.ofNullable(ret.getSecurePropertyPlaceholderModule());
+    }
+
 
 }

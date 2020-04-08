@@ -1,6 +1,8 @@
 package org.mule.modules.caas.internal;
 
 import org.mule.modules.caas.ServiceConfiguration;
+import org.mule.modules.caas.internal.security.encryption.binary.jce.algorithms.EncryptionAlgorithm;
+import org.mule.modules.caas.internal.security.encryption.binary.jce.algorithms.EncryptionMode;
 import org.mule.runtime.extension.api.annotation.Configuration;
 import org.mule.runtime.extension.api.annotation.Operations;
 import org.mule.runtime.extension.api.annotation.param.Optional;
@@ -69,38 +71,74 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
     private boolean disableHostNameVerification;
 
 
-    @Parameter
+    // @Parameter
     @Optional(defaultValue = "false")
     @Placement(tab = "Encryption", order = 1)
     private boolean enableClientDecryption;
 
-    @Parameter
-    @Optional @Placement(tab = "Encryption", order = 2)
+    //@Parameter
+    @Optional
+    @Placement(tab = "Encryption", order = 2)
     private String clientDecryptionKeyStore;
 
-    @Parameter
-    @Optional @Password @Placement(tab = "Encryption", order = 3)
+    //@Parameter
+    @Optional
+    @Password
+    @Placement(tab = "Encryption", order = 3)
     private String clientDecryptionKeyStorePassword;
 
-    @Parameter
-    @Optional @Placement(tab = "Encryption", order = 4)
+    //@Parameter
+    @Optional
+    @Placement(tab = "Encryption", order = 4)
     private String macKeyAlias;
 
-    @Parameter
-    @Optional @Password @Placement(tab = "Encryption", order = 5)
+    //@Parameter
+    @Optional
+    @Password
+    @Placement(tab = "Encryption", order = 5)
     private String macKeyPassword;
 
-    @Parameter
-    @Optional @Placement(tab = "Encryption", order = 6)
+    //@Parameter
+    @Optional
+    @Placement(tab = "Encryption", order = 6)
     private String wrapKeyAlias;
 
-    @Parameter
-    @Optional @Password @Placement(tab = "Encryption", order = 7)
+    //@Parameter
+    @Optional
+    @Password
+    @Placement(tab = "Encryption", order = 7)
     private String wrapKeyPassword;
 
     @Parameter
-    @Optional @Placement(order = 6)
+    @Optional
+    @Placement(order = 6)
     private Map<String, String> customHeaders;
+
+    @Parameter
+    @Optional(defaultValue = "AES")
+    @Placement(tab = "SecureProperties", order = 1)
+    private EncryptionAlgorithm encryptionAlgorithm;
+
+    @Parameter
+    @Optional(defaultValue = "CBC")
+    @Placement(tab = "SecureProperties", order = 2)
+    private EncryptionMode encryptionMode;
+
+    @Parameter
+    @Placement(tab = "SecureProperties", order = 3)
+    @Optional
+    @Password
+    private String key;
+
+    private SecurePropertyPlaceholderModule securePropertyPlaceholderModule;
+
+    public SecurePropertyPlaceholderModule getSecurePropertyPlaceholderModule() {
+        return securePropertyPlaceholderModule;
+    }
+
+    public void setSecurePropertyPlaceholderModule(SecurePropertyPlaceholderModule securePropertyPlaceholderModule) {
+        this.securePropertyPlaceholderModule = securePropertyPlaceholderModule;
+    }
 
     public String getServiceUrl() {
         return serviceUrl;
@@ -245,6 +283,30 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
         this.localEnvironmentName = localEnvironmentName;
     }
 
+    public EncryptionAlgorithm getEncryptionAlgorithm() {
+        return encryptionAlgorithm;
+    }
+
+    public void setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+        this.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    public EncryptionMode getEncryptionMode() {
+        return encryptionMode;
+    }
+
+    public void setEncryptionMode(EncryptionMode encryptionMode) {
+        this.encryptionMode = encryptionMode;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
     @Override
     public Map<String, String> getCustomHeaders() {
         return customHeaders;
@@ -253,4 +315,5 @@ public class ConfigurationServiceConfig implements ServiceConfiguration {
     public void setCustomHeaders(Map<String, String> customHeaders) {
         this.customHeaders = customHeaders;
     }
+
 }

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -99,6 +100,37 @@ public class ApplicationConfiguration implements Serializable {
         return dataWrapper;
     }
 
+    public Map<String, Object> findAppConfigAndDocument(String documentName, ApplicationConfiguration applicationConfiguration) {
+        {
+
+            for (ApplicationDocument doc : applicationConfiguration.getDocuments()) {
+                if (StringUtils.equals(documentName, doc.getName())) {
+                    if (doc.getName() == null || doc.getContentType() == null) {
+                        return null;
+                    }
+                    Map<String, Object> answer = new HashMap<>();
+                    answer.put("applicationConfiguration", applicationConfiguration);
+                    answer.put("document", doc);
+                    return answer;
+
+                }
+
+            }
+
+            //or else, return from any of the imports.
+            for (ApplicationConfiguration importedApp : applicationConfiguration.getImports()) {
+                Map<String, Object> doc = importedApp.findAppConfigAndDocument(documentName, importedApp);
+                if (doc != null) {
+                    return doc;
+                }
+            }
+
+            return null;
+        }
+
+    }
+
+
     public ApplicationDocument findDocument(String name) {
 
         for (ApplicationDocument doc : documents) {
@@ -126,7 +158,7 @@ public class ApplicationConfiguration implements Serializable {
 
         logger.debug("Invoking data wrapper to unwrap existing keys...");
 
-        for(String wrappedKey : properties.keySet()) {
+        for (String wrappedKey : properties.keySet()) {
             if (dataWrapper.wrapKey(wrappedKey).equals(plainKey)) {
                 return wrappedKey;
             }

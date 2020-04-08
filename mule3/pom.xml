@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mule.modules</groupId>
     <artifactId>configuration-service-connector</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-  	<packaging>mule-module</packaging>
+    <packaging>mule-module</packaging>
     <name>Configuration Service Connector :: Mule 3</name>
 
     <parent>
@@ -33,7 +34,7 @@
         </repository>
     </repositories>
 
-	<dependencies>
+    <dependencies>
 
         <dependency>
             <groupId>org.mule.modules.caas</groupId>
@@ -42,35 +43,40 @@
         </dependency>
 
         <dependency>
-			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-module-jersey</artifactId>
-			<version>${mule.version}</version>
-			<scope>provided</scope>
-		</dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-jersey</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
-		<!-- Add this to use Mule support for JSON based on Jackson -->
-		<dependency>
-			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-module-json</artifactId>
-			<version>${mule.version}</version>
-			<scope>provided</scope>
-		</dependency>
+        <!-- Add this to use Mule support for JSON based on Jackson -->
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-json</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-json-provider</artifactId>
-			<version>${jackson.version}</version>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+            <version>${jackson.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
-		<dependency>
-		  <groupId>org.apache.commons</groupId>
-		  <artifactId>commons-lang3</artifactId>
-		  <version>3.5</version>
-		  <scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mulesoft.security</groupId>
+            <artifactId>security-api</artifactId>
+            <version>1.5.2</version>
+        </dependency>
 
-	</dependencies>
+    </dependencies>
 
 
 </project>

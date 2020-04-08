@@ -1,5 +1,6 @@
 package org.mule.modules.caas.config;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.mule.api.annotations.components.Configuration;
 import org.mule.api.annotations.Configurable;
 import org.mule.api.annotations.display.FriendlyName;
@@ -8,6 +9,9 @@ import org.mule.api.annotations.display.Placement;
 import org.mule.api.annotations.param.Default;
 import org.mule.api.annotations.param.Optional;
 import org.mule.modules.caas.ServiceConfiguration;
+import org.mule.security.encryption.MuleEncryptionException;
+import org.mule.security.encryption.binary.jce.algorithms.EncryptionAlgorithm;
+import org.mule.security.encryption.binary.jce.algorithms.EncryptionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,20 +22,20 @@ import java.util.regex.Pattern;
 
 
 @Configuration(friendlyName = "Configuration Service Connector")
-public class ConnectorConfig implements ServiceConfiguration{
+public class ConnectorConfig implements ServiceConfiguration {
 
-    public enum SystemPropertiesMode {
-        SYSTEM_PROPERTIES_MODE_NEVER,
-        SYSTEM_PROPERTIES_MODE_FALLBACK,
-        SYSTEM_PROPERTIES_MODE_OVERRIDE
-    }
+	public enum SystemPropertiesMode {
+		SYSTEM_PROPERTIES_MODE_NEVER,
+		SYSTEM_PROPERTIES_MODE_FALLBACK,
+		SYSTEM_PROPERTIES_MODE_OVERRIDE
+	}
 
 	/**
 	 * The base URL where the Spring Cloud Config API is hosted.
 	 */
 	@Configurable
 	@Default("http://localhost:8888/")
-    @FriendlyName("Configuration Service URL")
+	@FriendlyName("Configuration Service URL")
 	@Placement(group = "Basic", order = 1)
 	private String serviceUrl;
 
@@ -46,8 +50,8 @@ public class ConnectorConfig implements ServiceConfiguration{
 	 * used.
 	 */
 	@Configurable
-    @Optional
-    @FriendlyName("Application Name")
+	@Optional
+	@FriendlyName("Application Name")
 	@Placement(group = "Basic", order = 2)
 	private String application;
 
@@ -81,7 +85,8 @@ public class ConnectorConfig implements ServiceConfiguration{
 	 * The location of the trust store either in the classpath or in the filesystem.
 	 */
 	@Configurable
-	@Optional @Placement(group = "SSL", tab = "SSL", order = 1)
+	@Optional
+	@Placement(group = "SSL", tab = "SSL", order = 1)
 	private String trustStore;
 
 	/**
@@ -89,14 +94,16 @@ public class ConnectorConfig implements ServiceConfiguration{
 	 */
 	@Configurable
 	@Password
-	@Optional @Placement(group = "SSL", tab = "SSL", order = 2)
+	@Optional
+	@Placement(group = "SSL", tab = "SSL", order = 2)
 	private String trustStorePassword;
 
 	/**
 	 * The location of the keystore either in the classpath or in the filesystem.
 	 */
 	@Configurable
-	@Optional @Placement(group = "SSL", tab = "SSL", order = 3)
+	@Optional
+	@Placement(group = "SSL", tab = "SSL", order = 3)
 	private String keyStore;
 
 	/**
@@ -104,72 +111,115 @@ public class ConnectorConfig implements ServiceConfiguration{
 	 */
 	@Configurable
 	@Password
-	@Optional @Placement(group = "SSL", tab = "SSL", order = 4)
+	@Optional
+	@Placement(group = "SSL", tab = "SSL", order = 4)
 	private String keyStorePassword;
 
 	@Configurable
 	@Default("false")
-	@Optional @Placement(group = "SSL", tab = "SSL", order = 5)
+	@Optional
+	@Placement(group = "SSL", tab = "SSL", order = 5)
 	private boolean disableHostNameVerification;
 
 
 	@Configurable
-    @Optional @Default("0")
-    @Placement(group = "Property Placeholder", order = 2)
+	@Optional
+	@Default("0")
+	@Placement(group = "Property Placeholder", order = 2)
 	private int order;
 
 
-    @Configurable
-    @Default("false")
-    @Placement(group = "Property Placeholder", order = 1)
+	@Configurable
+	@Default("false")
+	@Placement(group = "Property Placeholder", order = 1)
 	private boolean ignoreUnresolvablePlaceholders;
 
-    @Configurable
-    @Default("SYSTEM_PROPERTIES_MODE_FALLBACK")
-    @Placement(group = "Property Placeholder", order = 3)
-    private SystemPropertiesMode systemPropertiesMode;
-
-
-    //encryption settings.
 	@Configurable
-	@Optional @Default("false")
+	@Default("SYSTEM_PROPERTIES_MODE_FALLBACK")
+	@Placement(group = "Property Placeholder", order = 3)
+	private SystemPropertiesMode systemPropertiesMode;
+
+	/**
+	 * <p>The encryption algorithm used </p>
+	 * <p/>
+	 * <p>Allowed algorithms AES(Default), Blowfish, DES, DESede, RC2, RSA, PBEWithMD5AndDES</p>
+	 */
+	@Configurable
+	@Optional
+	@Default("AES")
+	@Placement(group = "Property Placeholder", order = 4)
+	private EncryptionAlgorithm encryptionAlgorithm;
+
+	/**
+	 * <p>The encryption mode used </p>
+	 * <p/>
+	 * <p>Allowed modes CBC, CFB, ECB, OFB, PCBC</p>
+	 */
+	@Configurable
+	@Optional
+	@Default("CBC")
+	@Placement(group = "Property Placeholder", order = 5)
+	private EncryptionMode encryptionMode;
+
+	/**
+	 * <p>The decryption key </p>
+	 */
+	@Configurable
+	@Placement(group = "Property Placeholder", order = 6)
+	@Optional
+	private String key;
+
+
+	//encryption settings.
+	@Configurable
+	@Optional
+	@Default("false")
 	@Placement(tab = "Encryption", order = 1)
-    private boolean enableClientDecryption;
+	private boolean enableClientDecryption;
 
 	@Configurable
-	@Optional @Placement(tab = "Encryption", order = 2)
-    private String clientDecryptionKeyStore;
+	@Optional
+	@Placement(tab = "Encryption", order = 2)
+	private String clientDecryptionKeyStore;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "Encryption", order = 3)
-    private String clientDecryptionKeyStorePassword;
+	@Optional
+	@Password
+	@Placement(tab = "Encryption", order = 3)
+	private String clientDecryptionKeyStorePassword;
 
 	@Configurable
-	@Optional @Placement(tab = "Encryption", order = 4)
-    private String macKeyAlias;
+	@Optional
+	@Placement(tab = "Encryption", order = 4)
+	private String macKeyAlias;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "Encryption", order = 5)
-    private String macKeyPassword;
+	@Optional
+	@Password
+	@Placement(tab = "Encryption", order = 5)
+	private String macKeyPassword;
 
 	@Configurable
-	@Optional @Placement(tab = "Encryption", order = 6)
+	@Optional
+	@Placement(tab = "Encryption", order = 6)
 	private String wrapKeyAlias;
 
 	@Configurable
-	@Optional @Password @Placement(tab = "Encryption", order = 7)
+	@Optional
+	@Password
+	@Placement(tab = "Encryption", order = 7)
 	private String wrapKeyPassword;
 
-    @Override
-    public String getApplication() {
-        return application;
-    }
+	@Override
+	public String getApplication() {
+		return application;
+	}
 
-    public void setApplication(String application) {
-        this.application = readEnvironmentalProperties(application);
-    }
+	public void setApplication(String application) {
+		this.application = readEnvironmentalProperties(application);
+	}
 
-    public String getVersion() {
+	public String getVersion() {
 		return version;
 	}
 
@@ -185,16 +235,16 @@ public class ConnectorConfig implements ServiceConfiguration{
 		this.environment = readEnvironmentalProperties(environment);
 	}
 
-    @Override
-    public String getServiceUrl() {
-        return serviceUrl;
-    }
+	@Override
+	public String getServiceUrl() {
+		return serviceUrl;
+	}
 
-    public void setServiceUrl(String serviceUrl) {
-        this.serviceUrl = readEnvironmentalProperties(serviceUrl);
-    }
+	public void setServiceUrl(String serviceUrl) {
+		this.serviceUrl = readEnvironmentalProperties(serviceUrl);
+	}
 
-    public String getTrustStore() {
+	public String getTrustStore() {
 		return trustStore;
 	}
 
@@ -305,31 +355,55 @@ public class ConnectorConfig implements ServiceConfiguration{
 		this.localEnvironmentName = readEnvironmentalProperties(localEnvironmentName);
 	}
 
-    public int getOrder() {
-        return order;
-    }
+	public int getOrder() {
+		return order;
+	}
 
-    public void setOrder(int order) {
-        this.order = order;
-    }
+	public void setOrder(int order) {
+		this.order = order;
+	}
 
-    public boolean isIgnoreUnresolvablePlaceholders() {
-        return ignoreUnresolvablePlaceholders;
-    }
+	public boolean isIgnoreUnresolvablePlaceholders() {
+		return ignoreUnresolvablePlaceholders;
+	}
 
-    public void setIgnoreUnresolvablePlaceholders(boolean ignoreUnresolvablePlaceholders) {
-        this.ignoreUnresolvablePlaceholders = ignoreUnresolvablePlaceholders;
-    }
+	public void setIgnoreUnresolvablePlaceholders(boolean ignoreUnresolvablePlaceholders) {
+		this.ignoreUnresolvablePlaceholders = ignoreUnresolvablePlaceholders;
+	}
 
-    public SystemPropertiesMode getSystemPropertiesMode() {
-        return systemPropertiesMode;
-    }
+	public SystemPropertiesMode getSystemPropertiesMode() {
+		return systemPropertiesMode;
+	}
 
-    public void setSystemPropertiesMode(SystemPropertiesMode systemPropertiesMode) {
-        this.systemPropertiesMode = systemPropertiesMode;
-    }
+	public void setSystemPropertiesMode(SystemPropertiesMode systemPropertiesMode) {
+		this.systemPropertiesMode = systemPropertiesMode;
+	}
 
-    @Override
+	public EncryptionAlgorithm getEncryptionAlgorithm() {
+		return encryptionAlgorithm;
+	}
+
+	public void setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+		this.encryptionAlgorithm = encryptionAlgorithm;
+	}
+
+	public EncryptionMode getEncryptionMode() {
+		return encryptionMode;
+	}
+
+	public void setEncryptionMode(EncryptionMode encryptionMode) {
+		this.encryptionMode = encryptionMode;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	@Override
 	public String toString() {
 		return "ConnectorConfig{" +
 				"serviceUrl='" + serviceUrl + '\'' +
@@ -350,38 +424,53 @@ public class ConnectorConfig implements ServiceConfiguration{
 
 ///UTILITY METHODS TO ALLOW USAGE OF PLACEHOLDERS WITHIN THE PLACEHOLDERS
 
+	public byte[] decrypt(byte[] payload) throws MuleEncryptionException {
+		return getEncryptionAlgorithm().getBuilder().using(getEncryptionMode())
+				.forKey(readEnvironmentalProperties(getKey())).build().decrypt(payload);
+	}
 
-    public String readEnvironmentalProperties(String text)
-    {
-        Pattern propertyPatter = Pattern.compile("\\$\\{([^\\}]+)\\}");
-        Matcher propertyMatcher = propertyPatter.matcher(text);
-        String modifiedText = text;
-        while (propertyMatcher.find())
-        {
-            String property = propertyMatcher.group(1);
-            modifiedText = replaceProperty(modifiedText, property);
-        }
+	protected String convertPropertyValue(String originalValue) {
 
-        return modifiedText;
-    }
+		if (originalValue.startsWith("![") && originalValue.endsWith("]")) {
 
-    private String replaceProperty(String modifiedText, String property)
-    {
-        String propertyValue = System.getProperty(property);
-        checkForPropertyExistence(property, propertyValue);
-        String pattern = "\\$\\{(" + property + ")\\}";
-        Pattern replacement = Pattern.compile(pattern);
-        Matcher replacementMatcher = replacement.matcher(modifiedText);
-        replacementMatcher.find();
-        return replacementMatcher.replaceAll(Matcher.quoteReplacement(propertyValue));
-    }
+			String propertyKey = originalValue.substring(2, originalValue.length() - 1);
 
-    private void checkForPropertyExistence(String property, String propertyValue)
-    {
-        if (propertyValue == null)
-        {
-            throw new RuntimeException("Property " + property + " could not be found");
-        }
-    }
+			try {
+				String decrpytValue = new String(decrypt(Base64.decode(propertyKey)));
+				return decrpytValue;
+			} catch (MuleEncryptionException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return originalValue;
+	}
+
+	public String readEnvironmentalProperties(String text) {
+		Pattern propertyPatter = Pattern.compile("\\$\\{([^\\}]+)\\}");
+		Matcher propertyMatcher = propertyPatter.matcher(text);
+		String modifiedText = text;
+		while (propertyMatcher.find()) {
+			String property = propertyMatcher.group(1);
+			modifiedText = replaceProperty(modifiedText, property);
+		}
+
+		return convertPropertyValue(modifiedText);
+	}
+
+	private String replaceProperty(String modifiedText, String property) {
+		String propertyValue = System.getProperty(property);
+		checkForPropertyExistence(property, propertyValue);
+		String pattern = "\\$\\{(" + property + ")\\}";
+		Pattern replacement = Pattern.compile(pattern);
+		Matcher replacementMatcher = replacement.matcher(modifiedText);
+		replacementMatcher.find();
+		return replacementMatcher.replaceAll(Matcher.quoteReplacement(propertyValue));
+	}
+
+	private void checkForPropertyExistence(String property, String propertyValue) {
+		if (propertyValue == null) {
+			throw new RuntimeException("Property " + property + " could not be found");
+		}
+	}
 
 }
