@@ -1,5 +1,6 @@
 package org.mule.modules.caas;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.mule.api.MuleContext;
 import org.mule.api.annotations.Config;
@@ -15,7 +16,9 @@ import org.mule.transformer.types.SimpleDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer;
-
+import org.mule.security.encryption.MuleEncryptionException;
+import org.mule.security.encryption.binary.jce.algorithms.EncryptionAlgorithm;
+import org.mule.security.encryption.binary.jce.algorithms.EncryptionMode;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -25,11 +28,11 @@ import java.util.Properties;
 @Connector(name="configuration-service", friendlyName="Configuration Service")
 public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigurer {
 
-	private static final Logger logger = LoggerFactory.getLogger(ConfigurationServiceConnector.class);
-	
-	@Inject
-	private MuleContext context;
-	
+        private static final Logger logger = LoggerFactory.getLogger(ConfigurationServiceConnector.class);
+    
+        @Inject
+        private MuleContext context;
+    
     @Config
     ConnectorConfig config;
 
@@ -48,73 +51,75 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
     public void setup() throws Exception {
 
         if (appConfig != null) {
-    	    logger.debug("Connector already initialized, skipping re-initialization.");
-    	    return;
+            logger.info("Connector already initialized, skipping re-initialization.");
+            return;
         }
-
-        logger.debug("Setting up connector with properties: {}", config);
-
+        logger.info("Setting up connector with properties: {}", config);
         super.setIgnoreUnresolvablePlaceholders(config.isIgnoreUnresolvablePlaceholders());
-    	super.setSystemPropertiesModeName(config.getSystemPropertiesMode().name());
-    	super.setOrder(config.getOrder());
-
+        super.setSystemPropertiesModeName(config.getSystemPropertiesMode().name());
+        super.setOrder(config.getOrder());
         provider = ApplicationDataProvider.factory.newApplicationDataProvider(config);
-
-    	appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
+        appConfig = loadApplicationConfiguration(provider, resolveApplicationName(), config.getVersion(), config.getEnvironment());
     }
 
     @PreDestroy
     public void disposeBean() {
-        logger.debug("Destroying {}" , getClass().getName());
+        logger.info("Destroying {}" , getClass().getName());
     }
 
     @Override
     protected String resolvePlaceholder(String placeholder, Properties p) {
-    	logger.debug("Call to resolve placeholder: {}", placeholder);
-    	
-    	String value = this.appConfig.readProperty(placeholder);
-
-    	if (value != null) {
-    		logger.debug("Found key in config server");
-    		return value;
-    	}
-    	
-    	logger.debug("Key not found in config server, resolving in the traditional way");
-    	return super.resolvePlaceholder(placeholder, p);
+        logger.info("Call to resolve placeholder: {}", placeholder);
+        String value = this.appConfig.readProperty(placeholder);
+        if (value != null) {
+            logger.debug("Found key in config server" + value);           
+            return convertPropertyValue(value);
+        }   
+        logger.debug("Key not found in config server, resolving in the traditional way");
+        return super.resolvePlaceholder(placeholder, p);
     }
 
+    protected String convertPropertyValue(String originalValue) {
+
+        if (originalValue.startsWith("![") && originalValue.endsWith("]")) {
+            
+            logger.debug("Secure property found: " + originalValue);
+            String propertyKey = originalValue.substring(2, originalValue.length() - 1);
+            
+            try {
+                String decrpytValue = new String(config.
+                decrypt(Base64.decode(propertyKey)));
+                //logger.debug("Secure property found, in try block: " + decrpytValue);
+                return decrpytValue;
+            } catch (MuleEncryptionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        logger.debug("Non-Secure property found: " + originalValue);
+        return originalValue;
+    }
     
     private String resolveApplicationName() {
-    	
-    	String app = config.getApplication();
-    	
-    	if (logger.isDebugEnabled()) logger.debug("Found app name: {}", app);
-    	
-    	if (StringUtils.isEmpty(app)) {
-    		app = context.getConfiguration().getId();
-    		
-    		if (logger.isDebugEnabled()) logger.debug("Detected app name: {}", app);
-    	}
-    	
-    	if (StringUtils.isEmpty(app)) {
-    		logger.error("App name could not be detected");
-    		throw new IllegalArgumentException("Could not detect application name from context or configuration.");
-    	}
-    	
-    	
-    	if (logger.isDebugEnabled()) logger.debug("Detected app name: {} ", app);
-    	
-    	return app;
-    	
+        String app = config.getApplication();
+        if (logger.isDebugEnabled()) logger.debug("Found app name: {}", app);
+        if (StringUtils.isEmpty(app)) {
+            app = context.getConfiguration().getId();   
+            if (logger.isDebugEnabled()) logger.debug("Detected app name: {}", app);
+        }
+        if (StringUtils.isEmpty(app)) {
+            logger.error("App name could not be detected");
+            throw new IllegalArgumentException("Could not detect application name from context or configuration.");
+        }
+        if (logger.isDebugEnabled()) logger.debug("Detected app name: {} ", app);
+        return app;        
     }
 
-	public void setContext(MuleContext context) {
-		this.context = context;
-	}
+    public void setContext(MuleContext context) {
+        this.context = context;
+    }
 
-
-	@Processor
-	public TransformingValue<InputStream, DataType<InputStream>> readDocument(String key) throws ConfigurationNotFoundException {
+    @Processor
+    public TransformingValue<InputStream, DataType<InputStream>> readDocument(String key) throws ConfigurationNotFoundException {
 
         ApplicationDocument doc = appConfig.findDocument(key);
 
@@ -123,7 +128,7 @@ public class ConfigurationServiceConnector extends PreferencesPlaceholderConfigu
         return new DefaultTranformingValue<>(provider.loadDocument(doc, appConfig), new SimpleDataType<InputStream>(InputStream.class, doc.getContentType()));
     }
 
-	/**
+    /**
      * Recursive method to read from the configuration service an app and its imports.
      * @param name the application name to read.
      * @param version the version to read.
