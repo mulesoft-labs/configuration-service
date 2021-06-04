@@ -20,7 +20,7 @@
         <commons.cli.version>1.4</commons.cli.version>
         <log4j2.version>2.9.1</log4j2.version>
         <lmax.disruptor.version>3.3.7</lmax.disruptor.version>
-        <snakeyaml.version>1.18</snakeyaml.version>
+        <snakeyaml.version>1.26</snakeyaml.version>
     </properties>
 
     <build>
