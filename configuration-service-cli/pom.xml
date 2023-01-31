@@ -12,7 +12,7 @@
         <jaxrs.api.version>2.1</jaxrs.api.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <jersey.client.version>2.26</jersey.client.version>
+        <jersey.client.version>3.1.1</jersey.client.version>
         <jackson.version>2.9.2</jackson.version>
         <commons.lang.version>3.5</commons.lang.version>
         <commons.codec.version>1.9</commons.codec.version>
