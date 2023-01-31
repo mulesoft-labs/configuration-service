@@ -17,7 +17,7 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-        <jersey.client.version>2.26</jersey.client.version>
+        <jersey.client.version>3.1.1</jersey.client.version>
         <jaxrs.api.version>2.1</jaxrs.api.version>
 	</properties>
 
