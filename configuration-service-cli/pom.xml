@@ -12,15 +12,15 @@
         <jaxrs.api.version>2.1</jaxrs.api.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <jersey.client.version>2.26</jersey.client.version>
-        <jackson.version>2.9.2</jackson.version>
+        <jersey.client.version>2.30.1</jersey.client.version>
+        <jackson.version>2.9.10</jackson.version>
         <commons.lang.version>3.5</commons.lang.version>
         <commons.codec.version>1.9</commons.codec.version>
         <commons.io.version>1.3.2</commons.io.version>
         <commons.cli.version>1.4</commons.cli.version>
         <log4j2.version>2.9.1</log4j2.version>
         <lmax.disruptor.version>3.3.7</lmax.disruptor.version>
-        <snakeyaml.version>1.18</snakeyaml.version>
+        <snakeyaml.version>1.31</snakeyaml.version>
     </properties>
 
     <build>
