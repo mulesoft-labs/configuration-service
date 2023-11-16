@@ -19,7 +19,7 @@
         <licensePath>LICENSE.md</licensePath>
         <devkit.studio.package.skip>false</devkit.studio.package.skip>
         <jersey.client.version>1.19.3</jersey.client.version>
-        <jackson.version>2.4.3</jackson.version>
+        <jackson.version>2.9.10</jackson.version>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
